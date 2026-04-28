@@ -7,6 +7,28 @@ import { RESPONSES } from "./responses.js";
 import { getSession, setSession } from "./session-store.js";
 import { sendTelegramNotification } from "./telegram.js";
 
+// ---------------------------------------------------------------------------
+// Test Mode Filter
+// El bot SOLO responde si el remitente es el usuario de prueba autorizado
+// (INSTAGRAM_TEST_SENDER_ID) O si el mensaje contiene 'ACTIVAR_TEST'.
+// Configurar INSTAGRAM_TEST_MODE=false (o eliminar la var) para producción.
+// ---------------------------------------------------------------------------
+function isTestModeEnabled(): boolean {
+  const raw = process.env["INSTAGRAM_TEST_MODE"];
+  if (!raw) return true; // activado por defecto hasta que Sebastian lo desactive
+  return raw.trim().toLowerCase() !== "false" && raw.trim() !== "0";
+}
+
+function isAllowedInTestMode(senderId: string, text: string): boolean {
+  if (!isTestModeEnabled()) return true; // modo producción: todos pasan
+
+  const authorizedSenderId = process.env["INSTAGRAM_TEST_SENDER_ID"]?.trim();
+  if (authorizedSenderId && senderId === authorizedSenderId) return true;
+  if (text.includes("ACTIVAR_TEST")) return true;
+
+  return false;
+}
+
 type MessagingEvent = {
   sender: { id: string };
   recipient: { id: string };
@@ -141,6 +163,11 @@ async function processWebhookPayload(rawBody: string): Promise<void> {
       const senderId = event.sender?.id;
       const text = event.message?.text;
       if (!senderId || !text) continue;
+
+      if (!isAllowedInTestMode(senderId, text)) {
+        console.info(`[instagram] Mensaje de ${senderId} ignorado (filtro test mode)`);
+        continue;
+      }
 
       await handleMessage(senderId, text).catch((err) => {
         console.error(`[instagram] Error procesando mensaje de ${senderId}:`, err);
