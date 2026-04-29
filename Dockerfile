@@ -110,18 +110,18 @@ RUN install -d -m 0755 "$COREPACK_HOME" && \
 RUN ln -sf /app/openclaw.mjs /usr/local/bin/openclaw && \
     chmod 755 /app/openclaw.mjs
 
-# Pre-create writable state directory for Railway (HOME=/data is read-only there).
-RUN mkdir -p /app/data && chmod -R 777 /app/data && \
-    install -d -m 0700 -o node -g node /home/node/.openclaw
+# Pre-create writable state directory owned by node user.
+RUN mkdir -p /app/data/.openclaw && chown -R node:node /app/data
+
+# Entrypoint overrides HOME before Node starts (Railway injects HOME=/data at runtime).
+COPY --chown=root:root entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod 755 /usr/local/bin/entrypoint.sh
 
 ENV NODE_ENV=production
-# Railway injects HOME=/data (read-only) at runtime.
-# Force all home/state resolution to /app/data via three layers:
-ENV HOME=/app/data
-ENV OPENCLAW_HOME=/app/data
-ENV OPENCLAW_STATE_DIR=/app/data
 
 USER node
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
 HEALTHCHECK --interval=3m --timeout=10s --start-period=15s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:18789/healthz').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
