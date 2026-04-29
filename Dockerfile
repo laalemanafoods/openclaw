@@ -37,7 +37,7 @@ COPY scripts/postinstall-bundled-plugins.mjs \
 COPY . .
 
 # Install all dependencies.
-RUN NODE_OPTIONS=--max-old-space-size=2048 pnpm install --frozen-lockfile
+RUN NODE_OPTIONS=--max-old-space-size=2048 pnpm install --prefer-frozen-lockfile
 
 # Build the application.
 RUN pnpm canvas:a2ui:bundle || \
