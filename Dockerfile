@@ -110,10 +110,15 @@ RUN install -d -m 0755 "$COREPACK_HOME" && \
 RUN ln -sf /app/openclaw.mjs /usr/local/bin/openclaw && \
     chmod 755 /app/openclaw.mjs
 
-# Pre-create state directory with correct ownership.
-RUN install -d -m 0700 -o node -g node /home/node/.openclaw
+# Pre-create state directories with correct ownership.
+# /data is used by Railway volumes; /app/data is the preferred writable path.
+RUN install -d -m 0700 -o node -g node /home/node/.openclaw && \
+    mkdir -p /data/.openclaw && chmod -R 777 /data && \
+    mkdir -p /app/data && chown -R node:node /app/data
 
 ENV NODE_ENV=production
+# Redirect OpenClaw data dir to /app/data (writable by node user in Railway).
+ENV OPENCLAW_DATA_DIR=/app/data
 
 USER node
 
