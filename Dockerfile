@@ -66,7 +66,7 @@ COPY --from=ext-deps /out/ ./${OPENCLAW_BUNDLED_PLUGIN_DIR}/
 
 # Reduce OOM risk on low-memory hosts during dependency installation.
 # Docker builds on small VMs may otherwise fail with "Killed" (exit 137).
-RUN --mount=type=cache,id=openclaw-pnpm-store,target=/root/.local/share/pnpm/store \
+RUN --mount=type=cache,id=pnpm_store,target=/root/.local/share/pnpm/store \
     NODE_OPTIONS=--max-old-space-size=2048 pnpm install --frozen-lockfile
 
 # pnpm v10+ may append peer-resolution hashes to virtual-store folder names; do not hardcode `.pnpm/...`
@@ -158,8 +158,8 @@ WORKDIR /app
 # so it must be installed explicitly here. Without it `/etc/ssl/certs/`
 # stays empty and every HTTPS outbound dies at TLS handshake with
 # `error setting certificate file`.
-RUN --mount=type=cache,id=openclaw-bookworm-apt-cache,target=/var/cache/apt \
-    --mount=type=cache,id=openclaw-bookworm-apt-lists,target=/var/lib/apt \
+RUN --mount=type=cache,id=apt_cache_1,target=/var/cache/apt \
+    --mount=type=cache,id=apt_lists_1,target=/var/lib/apt \
     apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
       ca-certificates procps hostname curl git lsof openssl && \
@@ -197,8 +197,8 @@ RUN install -d -m 0755 "$COREPACK_HOME" && \
 # Install additional system packages needed by your skills or extensions.
 # Example: docker build --build-arg OPENCLAW_DOCKER_APT_PACKAGES="python3 wget" .
 ARG OPENCLAW_DOCKER_APT_PACKAGES=""
-RUN --mount=type=cache,id=openclaw-bookworm-apt-cache,target=/var/cache/apt \
-    --mount=type=cache,id=openclaw-bookworm-apt-lists,target=/var/lib/apt \
+RUN --mount=type=cache,id=apt_cache_2,target=/var/cache/apt \
+    --mount=type=cache,id=apt_lists_2,target=/var/lib/apt \
     if [ -n "$OPENCLAW_DOCKER_APT_PACKAGES" ]; then \
       apt-get update && \
       DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends $OPENCLAW_DOCKER_APT_PACKAGES; \
@@ -209,8 +209,8 @@ RUN --mount=type=cache,id=openclaw-bookworm-apt-cache,target=/var/cache/apt \
 # Adds ~300MB but eliminates the 60-90s Playwright install on every container start.
 # Must run after node_modules COPY so playwright-core is available.
 ARG OPENCLAW_INSTALL_BROWSER=""
-RUN --mount=type=cache,id=openclaw-bookworm-apt-cache,target=/var/cache/apt \
-    --mount=type=cache,id=openclaw-bookworm-apt-lists,target=/var/lib/apt \
+RUN --mount=type=cache,id=apt_cache_3,target=/var/cache/apt \
+    --mount=type=cache,id=apt_lists_3,target=/var/lib/apt \
     if [ -n "$OPENCLAW_INSTALL_BROWSER" ]; then \
       apt-get update && \
       DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends xvfb && \
@@ -226,8 +226,8 @@ RUN --mount=type=cache,id=openclaw-bookworm-apt-cache,target=/var/cache/apt \
 # Required for agents.defaults.sandbox to function in Docker deployments.
 ARG OPENCLAW_INSTALL_DOCKER_CLI=""
 ARG OPENCLAW_DOCKER_GPG_FINGERPRINT="9DC858229FC7DD38854AE2D88D81803C0EBFCD88"
-RUN --mount=type=cache,id=openclaw-bookworm-apt-cache,target=/var/cache/apt \
-    --mount=type=cache,id=openclaw-bookworm-apt-lists,target=/var/lib/apt \
+RUN --mount=type=cache,id=apt_cache_4,target=/var/cache/apt \
+    --mount=type=cache,id=apt_lists_4,target=/var/lib/apt \
     if [ -n "$OPENCLAW_INSTALL_DOCKER_CLI" ]; then \
       apt-get update && \
       DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
