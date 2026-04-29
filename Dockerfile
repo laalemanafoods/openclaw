@@ -110,12 +110,15 @@ RUN install -d -m 0755 "$COREPACK_HOME" && \
 RUN ln -sf /app/openclaw.mjs /usr/local/bin/openclaw && \
     chmod 755 /app/openclaw.mjs
 
-# Pre-create state directories with correct ownership.
-RUN install -d -m 0700 -o node -g node /home/node/.openclaw && \
-    mkdir -p /app/data && chown -R node:node /app/data
+# Pre-create writable state directory for Railway (HOME=/data is read-only there).
+RUN mkdir -p /app/data && chmod -R 777 /app/data && \
+    install -d -m 0700 -o node -g node /home/node/.openclaw
 
 ENV NODE_ENV=production
-# Override state dir: Railway sets HOME=/data (read-only), so we redirect to /app/data.
+# Railway injects HOME=/data (read-only) at runtime.
+# Force all home/state resolution to /app/data via three layers:
+ENV HOME=/app/data
+ENV OPENCLAW_HOME=/app/data
 ENV OPENCLAW_STATE_DIR=/app/data
 
 USER node
