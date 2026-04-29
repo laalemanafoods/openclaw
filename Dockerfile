@@ -70,10 +70,10 @@ LABEL org.opencontainers.image.base.name="docker.io/library/node:24-bookworm-sli
 
 WORKDIR /app
 
-# Install runtime system utilities.
+# Install runtime system utilities (minimal set to avoid build timeouts).
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-      ca-certificates procps hostname curl git lsof openssl && \
+      ca-certificates git openssl && \
     update-ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
