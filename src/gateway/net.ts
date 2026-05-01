@@ -275,6 +275,10 @@ function detectContainerEnvironment(): boolean {
   } catch {
     // /proc may not exist (macOS, Windows) — not a container
   }
+  // 3. Railway PaaS environment variables.
+  if (process.env["RAILWAY_ENVIRONMENT"] || process.env["RAILWAY_SERVICE_ID"]) {
+    return true;
+  }
   return false;
 }
 
