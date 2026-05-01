@@ -275,8 +275,14 @@ function detectContainerEnvironment(): boolean {
   } catch {
     // /proc may not exist (macOS, Windows) — not a container
   }
-  // 3. Railway PaaS environment variables.
-  if (process.env["RAILWAY_ENVIRONMENT"] || process.env["RAILWAY_SERVICE_ID"]) {
+  // 3. PaaS platform environment variables (Railway, Koyeb, Fly.io).
+  if (
+    process.env["RAILWAY_ENVIRONMENT"] ||
+    process.env["RAILWAY_SERVICE_ID"] ||
+    process.env["KOYEB_SERVICE_ID"] ||
+    process.env["KOYEB_APP_NAME"] ||
+    process.env["FLY_APP_NAME"]
+  ) {
     return true;
   }
   return false;
@@ -303,7 +309,19 @@ export async function resolveGatewayBindHost(
   bind: GatewayBindMode | undefined,
   customHost?: string,
 ): Promise<string> {
-  const mode = bind ?? "loopback";
+  // When no explicit bind mode is configured, honour the HOST env var so that
+  // PaaS platforms (Koyeb, Railway, Fly.io) that inject HOST=0.0.0.0 work
+  // out of the box without requiring --bind lan or config changes.
+  if (!bind) {
+    const envHost = process.env["HOST"]?.trim() || process.env["OPENCLAW_GATEWAY_HOST"]?.trim();
+    if (envHost && isValidIPv4(envHost)) {
+      return envHost;
+    }
+  }
+
+  // Default to 0.0.0.0 inside detected container/PaaS environments so that
+  // health checks from the platform can reach the gateway.
+  const mode = bind ?? (isContainerEnvironment() ? "lan" : "loopback");
 
   if (mode === "loopback") {
     // 127.0.0.1 rarely fails, but handle gracefully
