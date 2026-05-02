@@ -119,12 +119,16 @@ COPY --chown=root:root entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod 755 /usr/local/bin/entrypoint.sh
 
 ENV NODE_ENV=production
+# Default gateway port — Koyeb/Railway override via their PORT env var (mapped in entrypoint.sh).
+ENV OPENCLAW_GATEWAY_PORT=18789
+
+EXPOSE 18789
 
 USER node
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
 HEALTHCHECK --interval=3m --timeout=10s --start-period=15s --retries=3 \
-  CMD node -e "fetch('http://127.0.0.1:18789/healthz').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+  CMD node -e "fetch('http://127.0.0.1:' + (process.env.OPENCLAW_GATEWAY_PORT||18789) + '/healthz').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
 CMD ["node", "openclaw.mjs", "gateway", "--allow-unconfigured", "--bind", "lan"]

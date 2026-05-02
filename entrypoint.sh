@@ -5,6 +5,11 @@ export HOME=/app/data
 export OPENCLAW_HOME=/app/data
 export OPENCLAW_STATE_DIR=/app/data
 
+# Map Koyeb/Railway PORT env var to OpenClaw's gateway port setting.
+if [ -n "$PORT" ] && [ -z "$OPENCLAW_GATEWAY_PORT" ]; then
+  export OPENCLAW_GATEWAY_PORT="$PORT"
+fi
+
 # Ensure writable directories exist.
 mkdir -p /app/data/agents/main/agent 2>/dev/null || true
 
@@ -14,7 +19,7 @@ if [ -f /app/config/openclaw.default.json ]; then
 fi
 
 # Write auth-profiles.json for the main agent using the GEMINI_API_KEY env var.
-# This runs every start so the key stays in sync with the Koyeb Variable.
+# Runs every start so the key stays in sync with the Koyeb Variable.
 if [ -n "$GEMINI_API_KEY" ]; then
   cat > /app/data/agents/main/agent/auth-profiles.json << AUTHEOF
 {
