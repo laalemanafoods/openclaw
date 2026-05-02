@@ -1,0 +1,16 @@
+{
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "google/gemini-1.5-flash"
+      }
+    }
+  },
+  "models": {
+    "providers": {
+      "google": {
+        "apiKey": "${GEMINI_API_KEY}"
+      }
+    }
+  }
+}

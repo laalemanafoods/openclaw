@@ -90,6 +90,7 @@ COPY --from=runtime-assets --chown=node:node /app/skills ./skills
 COPY --from=runtime-assets --chown=node:node /app/docs ./docs
 COPY --from=runtime-assets --chown=node:node /app/qa ./qa
 COPY --from=runtime-assets --chown=node:node /app/conocimiento ./conocimiento
+COPY --from=runtime-assets --chown=node:node /app/config ./config
 
 # Keep pnpm available in the runtime image.
 ENV COREPACK_HOME=/usr/local/share/corepack
