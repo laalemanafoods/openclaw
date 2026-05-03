@@ -62,7 +62,8 @@ RUN CI=true NPM_CONFIG_FROZEN_LOCKFILE=false pnpm prune --prod && \
 # starts immediately instead of running npm install on first boot.
 # Uses the same path formula as bundled-runtime-deps.ts so the runtime
 # scan finds them and skips the "staging bundled runtime deps" step.
-RUN OPENCLAW_STATE_DIR=/app/data node scripts/prebuild-plugin-deps.mjs
+RUN OPENCLAW_STATE_DIR=/app/data node scripts/prebuild-plugin-deps.mjs || \
+    mkdir -p /app/data/plugin-runtime-deps
 
 # ── Stage 3: Runtime ────────────────────────────────────────────────────────
 FROM ${OPENCLAW_NODE_BOOKWORM_SLIM_IMAGE} AS runtime

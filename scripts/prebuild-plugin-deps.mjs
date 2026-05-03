@@ -7,6 +7,9 @@
 //
 // The install root path mirrors the formula in bundled-runtime-deps.ts:
 //   <stateDir>/plugin-runtime-deps/openclaw-<version>-<sha256(packageRoot)[0..11]>
+//
+// This script is intentionally non-fatal: any failure is logged as a warning
+// and the process exits 0 so the Docker build is never broken by this step.
 import { createHash } from "node:crypto";
 import { execSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
@@ -63,27 +66,39 @@ function collectMissingSpecs(installRoot) {
   return specs;
 }
 
-const stateDir = process.env.OPENCLAW_STATE_DIR?.trim() || path.join(PACKAGE_ROOT, "data");
-const installRoot = computeInstallRoot(stateDir);
+try {
+  const stateDir = process.env.OPENCLAW_STATE_DIR?.trim() || path.join(PACKAGE_ROOT, "data");
+  const installRoot = computeInstallRoot(stateDir);
 
-console.log(`[prebuild-plugin-deps] install root: ${installRoot}`);
-mkdirSync(installRoot, { recursive: true });
+  console.log(`[prebuild-plugin-deps] install root: ${installRoot}`);
+  mkdirSync(installRoot, { recursive: true });
 
-const specs = collectMissingSpecs(installRoot);
-if (specs.length === 0) {
-  console.log("[prebuild-plugin-deps] all plugin deps already present — nothing to install");
-  process.exit(0);
+  const specs = collectMissingSpecs(installRoot);
+  if (specs.length === 0) {
+    console.log("[prebuild-plugin-deps] all plugin deps already present — nothing to install");
+    process.exit(0);
+  }
+
+  console.log(`[prebuild-plugin-deps] pre-installing ${specs.length} dep(s): ${specs.join(", ")}`);
+  try {
+    execSync(`npm install --ignore-scripts ${specs.join(" ")}`, {
+      cwd: installRoot,
+      stdio: "inherit",
+      env: {
+        ...process.env,
+        npm_config_package_lock: "false",
+        npm_config_save: "false",
+        npm_config_legacy_peer_deps: "true",
+      },
+    });
+    console.log("[prebuild-plugin-deps] done");
+  } catch (installErr) {
+    console.warn(
+      `[prebuild-plugin-deps] npm install failed (non-fatal, gateway will install at first boot): ${installErr.message ?? installErr}`,
+    );
+  }
+} catch (err) {
+  console.warn(
+    `[prebuild-plugin-deps] unexpected error (non-fatal): ${err.message ?? err}`,
+  );
 }
-
-console.log(`[prebuild-plugin-deps] pre-installing ${specs.length} dep(s): ${specs.join(", ")}`);
-execSync(`npm install --ignore-scripts ${specs.join(" ")}`, {
-  cwd: installRoot,
-  stdio: "inherit",
-  env: {
-    ...process.env,
-    npm_config_package_lock: "false",
-    npm_config_save: "false",
-    npm_config_legacy_peer_deps: "true",
-  },
-});
-console.log("[prebuild-plugin-deps] done");
