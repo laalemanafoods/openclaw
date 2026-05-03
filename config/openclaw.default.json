@@ -20,6 +20,7 @@
     ]
   },
   "models": {
+    "defaultProvider": "openai",
     "providers": {
       "openai": {
         "api": "openai",

@@ -20,20 +20,20 @@ if [ -f /app/config/openclaw.default.json ]; then
   cp /app/config/openclaw.default.json /app/data/openclaw.json
 fi
 
-# Remove any stale auth config (e.g. old OpenAI key) before writing the current one.
+# Remove any stale auth config before writing the current one.
 rm -f /app/data/agents/main/agent/auth-profiles.json 2>/dev/null || true
 
-# Write auth-profiles.json for the main agent using the GEMINI_API_KEY env var.
+# Write auth-profiles.json for the main agent using the OPENAI_API_KEY env var.
 # Runs every start so the key stays in sync with the Koyeb Variable.
-if [ -n "$GEMINI_API_KEY" ]; then
+if [ -n "$OPENAI_API_KEY" ]; then
   cat > /app/data/agents/main/agent/auth-profiles.json << AUTHEOF
 {
   "version": 1,
   "profiles": {
-    "google-1": {
+    "openai-1": {
       "type": "api_key",
-      "provider": "google",
-      "key": "$GEMINI_API_KEY"
+      "provider": "openai",
+      "key": "$OPENAI_API_KEY"
     }
   }
 }
