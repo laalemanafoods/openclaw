@@ -58,6 +58,12 @@ RUN CI=true NPM_CONFIG_FROZEN_LOCKFILE=false pnpm prune --prod && \
     node scripts/postinstall-bundled-plugins.mjs && \
     find dist -type f \( -name '*.d.ts' -o -name '*.d.mts' -o -name '*.d.cts' -o -name '*.map' \) -delete
 
+# Pre-install bundled plugin runtime deps at build time so the gateway
+# starts immediately instead of running npm install on first boot.
+# Uses the same path formula as bundled-runtime-deps.ts so the runtime
+# scan finds them and skips the "staging bundled runtime deps" step.
+RUN OPENCLAW_STATE_DIR=/app/data node scripts/prebuild-plugin-deps.mjs
+
 # ── Stage 3: Runtime ────────────────────────────────────────────────────────
 FROM ${OPENCLAW_NODE_BOOKWORM_SLIM_IMAGE} AS runtime
 
@@ -91,6 +97,7 @@ COPY --from=runtime-assets --chown=node:node /app/docs ./docs
 COPY --from=runtime-assets --chown=node:node /app/qa ./qa
 COPY --from=runtime-assets --chown=node:node /app/conocimiento ./conocimiento
 COPY --from=runtime-assets --chown=node:node /app/config ./config
+COPY --from=runtime-assets --chown=node:node /app/data/plugin-runtime-deps /app/data/plugin-runtime-deps
 
 # Keep pnpm available in the runtime image.
 ENV COREPACK_HOME=/usr/local/share/corepack
