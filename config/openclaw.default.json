@@ -7,29 +7,28 @@
   "agents": {
     "defaults": {
       "model": {
-        "primary": "gemini-1.5-flash"
+        "primary": "gpt-4o-mini"
       }
     },
     "list": [
       {
         "id": "main",
         "model": {
-          "primary": "gemini-1.5-flash"
+          "primary": "gpt-4o-mini"
         }
       }
     ]
   },
   "models": {
     "providers": {
-      "google": {
-        "baseUrl": "https://generativelanguage.googleapis.com/v1beta",
-        "api": "google-generative-ai",
-        "apiKey": "${GEMINI_API_KEY}",
+      "openai": {
+        "api": "openai",
+        "apiKey": "${OPENAI_API_KEY}",
         "models": [
           {
-            "id": "gemini-1.5-flash",
-            "name": "Gemini 1.5 Flash",
-            "api": "google-generative-ai"
+            "id": "gpt-4o-mini",
+            "name": "GPT-4o Mini",
+            "api": "openai"
           }
         ]
       }
