@@ -139,4 +139,6 @@ ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 HEALTHCHECK --interval=3m --timeout=10s --start-period=15s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:' + (process.env.OPENCLAW_GATEWAY_PORT||18789) + '/healthz').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
+RUN rm -f /app/data/openclaw.json
+
 CMD ["node", "openclaw.mjs", "gateway", "--allow-unconfigured", "--bind", "lan"]
