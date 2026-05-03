@@ -7,14 +7,14 @@
   "agents": {
     "defaults": {
       "model": {
-        "primary": "google/gemini-1.5-flash"
+        "primary": "gemini-1.5-flash"
       }
     },
     "list": [
       {
         "id": "main",
         "model": {
-          "primary": "google/gemini-1.5-flash"
+          "primary": "gemini-1.5-flash"
         }
       }
     ]
