@@ -2,9 +2,8 @@ export const RESPONSES = {
   consumer: {
     info(): string {
       return (
-        "¡Hola! 😊 Soy La Alemanita Digital, de La Alemana Foods.\n\n" +
-        "Para ayudarte de forma más rápida y eficiente, voy a acompañarte en los primeros pasos.\n\n" +
-        "¿En qué te puedo ayudar hoy?"
+        "¡Hola! 😊 Soy La Alemanita, tu asistente de La Alemana Foods.\n\n" +
+        "Estoy acá para ayudarte con lo que necesites. ¿En qué te puedo ayudar hoy?"
       );
     },
   },
@@ -12,28 +11,27 @@ export const RESPONSES = {
   b2b: {
     askForData(): string {
       return (
-        "¡Hola! 👋 Gracias por tu interés en trabajar con La Alemana Foods.\n\n" +
-        "Para enviarte nuestra lista de precios, necesito algunos datos:\n\n" +
-        "• Nombre completo:\n" +
+        "¡Hola! Me alegra que quieras trabajar con nosotros 🤝\n\n" +
+        "Para mandarte los precios necesito estos datos:\n\n" +
+        "• Nombre:\n" +
         "• Teléfono:\n" +
         "• Nombre del negocio:\n" +
-        "• Ubicación (barrio/ciudad):\n\n" +
-        "¿Podés completarlos? ✍️"
+        "• Barrio/ciudad:\n\n" +
+        "¡Completalos y te mando todo enseguida! ✍️"
       );
     },
 
     sendPrices(nombre: string, negocio: string): string {
       void negocio;
       return (
-        `¡Perfecto, ${nombre}! 🙌\n\n` +
-        "Precios Abril 2026:\n\n" +
+        `¡Gracias, ${nombre}! Acá van los precios 👇\n\n` +
         "Pack pequeño (Retail):\n" +
         "Frankfurter $7.466 | Thüringer $7.563\n" +
         "Rinderwurst $8.833 | Wiener $7.466 | Leberwurst $5.506\n\n" +
         "Pack ~1kg (Gastronomía):\n" +
         "Frankfurter $14.484 | Thüringer $14.544\n" +
         "Rinderwurst $16.577 | Wiener $12.463 | Leberwurst $13.262\n\n" +
-        "Nuestro equipo comercial te contacta a la brevedad. ¡Gracias por elegirnos! 🥩"
+        "Alguien del equipo te va a escribir pronto. ¡Bienvenido! 🥩"
       );
     },
   },
@@ -41,12 +39,12 @@ export const RESPONSES = {
   queja: {
     initial(): string {
       return (
-        "Lamentamos mucho que hayas tenido una mala experiencia. 😟\n\n" +
-        "Para ayudarte lo antes posible, necesitamos saber:\n\n" +
-        "1️⃣ ¿Qué fue lo que pasó?\n" +
-        "2️⃣ ¿Dónde compraste el producto? (nombre del local o ciudad)\n" +
-        "3️⃣ ¿Podés enviarnos una foto del producto?\n\n" +
-        "Nuestro equipo te va a responder a la brevedad. ¡Gracias por avisarnos!"
+        "Ay, lo sentimos mucho 😟 Eso no debería pasar.\n\n" +
+        "Contame un poco más para poder ayudarte:\n\n" +
+        "1️⃣ ¿Qué pasó?\n" +
+        "2️⃣ ¿Dónde compraste el producto?\n" +
+        "3️⃣ ¿Podés mandar una foto?\n\n" +
+        "Te respondemos lo antes posible, prometido."
       );
     },
   },
@@ -54,22 +52,22 @@ export const RESPONSES = {
   vendedor: {
     redirect(): string {
       return (
-        "¡Hola! 👋 Gracias por tu interés en representar a La Alemana Foods.\n\n" +
-        "Por favor enviá tu consulta con tus datos a:\n\n" +
+        "¡Hola! Qué bueno que te interese sumarte 😊\n\n" +
+        "Mandanos tu consulta con tus datos a:\n" +
         "📧 laalemanafoods@gmail.com\n\n" +
-        "Nuestro equipo de ventas te va a responder a la brevedad. ¡Gracias!"
+        "El equipo comercial te responde pronto. ¡Gracias!"
       );
     },
   },
 
   fallback(): string {
     return (
-      "¡Hola! 👋 Somos La Alemana Foods, embutidos alemanes artesanales sin TACC.\n\n" +
-      "¿En qué te podemos ayudar?\n" +
-      "• Información sobre productos\n" +
-      "• Recetas y sugerencias de cocción\n" +
+      "¡Hola! 😊 Soy La Alemanita, de La Alemana Foods.\n\n" +
+      "¿En qué te puedo ayudar?\n" +
+      "• Info de productos\n" +
+      "• Recetas y cocción\n" +
       "• Dónde conseguirnos\n" +
-      "• Precios para negocios (B2B)"
+      "• Precios para negocios"
     );
   },
 };
