@@ -1,24 +1,14 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-
-function readKnowledgeFile(filename: string): string {
-  try {
-    return readFileSync(resolve(process.cwd(), "conocimiento", filename), "utf-8");
-  } catch {
-    return "";
-  }
-}
-
 export const RESPONSES = {
   consumer: {
     info(): string {
-      const productos = readKnowledgeFile("productos_detalle.md");
-      const base =
-        "¡Hola! 👋 Somos La Alemana Foods, embutidos alemanes artesanales sin TACC.\n\n";
-      const catalogue = productos
-        ? `Estos son nuestros productos:\n\n${productos}\n\n`
-        : "";
-      return `${base}${catalogue}¿En qué te puedo ayudar? Consultame sobre recetas, ingredientes o dónde conseguir nuestros productos.`;
+      return (
+        "¡Hola! 👋 Somos La Alemana Foods, embutidos alemanes artesanales sin TACC.\n\n" +
+        "Nuestros productos:\n" +
+        "🥩 Para asado/plancha: Frankfurter, Thüringer, Bratwurst, Rinderwurst, Fleischkäse\n" +
+        "🌭 Para calentar (5 min): Wiener Wurst, Knackwurst, Mini Wiener\n" +
+        "🧈 Untables: Leberwurst, Panceta Ahumada\n\n" +
+        "¿Querés info de algún producto, receta o dónde conseguirnos? ¡Preguntame! 😊"
+      );
     },
   },
 
@@ -36,13 +26,17 @@ export const RESPONSES = {
     },
 
     sendPrices(nombre: string, negocio: string): string {
-      const precios = readKnowledgeFile("precios_abril.md");
-      const priceLine = precios
-        ? `\n\nAquí están nuestras listas de precios para ${negocio}:\n\n${precios}`
-        : "";
+      void negocio;
       return (
-        `¡Perfecto, ${nombre}! 🙌${priceLine}\n\n` +
-        "Nuestro equipo comercial se va a comunicar con vos a la brevedad. ¡Gracias por elegirnos! 🥩"
+        `¡Perfecto, ${nombre}! 🙌\n\n` +
+        "Precios Abril 2026:\n\n" +
+        "Pack pequeño (Retail):\n" +
+        "Frankfurter $7.466 | Thüringer $7.563\n" +
+        "Rinderwurst $8.833 | Wiener $7.466 | Leberwurst $5.506\n\n" +
+        "Pack ~1kg (Gastronomía):\n" +
+        "Frankfurter $14.484 | Thüringer $14.544\n" +
+        "Rinderwurst $16.577 | Wiener $12.463 | Leberwurst $13.262\n\n" +
+        "Nuestro equipo comercial te contacta a la brevedad. ¡Gracias por elegirnos! 🥩"
       );
     },
   },

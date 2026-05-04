@@ -14,13 +14,19 @@ export async function sendInstagramReply(params: {
     return;
   }
 
+  const MAX_CHARS = 990;
+  const text =
+    params.text.length > MAX_CHARS
+      ? params.text.slice(0, MAX_CHARS - 3).trimEnd() + "..."
+      : params.text;
+
   try {
     const resp = await fetch(`https://graph.instagram.com/v25.0/${pageId}/messages`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         recipient: { id: params.recipientId },
-        message: { text: params.text },
+        message: { text },
         messaging_type: "RESPONSE",
         access_token: accessToken,
       }),
