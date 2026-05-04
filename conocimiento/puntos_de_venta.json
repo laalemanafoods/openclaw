@@ -1,4 +1,107 @@
 {
   "tienda_online": "",
-  "puntos": []
+  "puntos": [
+    {
+      "nombre": "Jabugo",
+      "ciudad": "Córdoba",
+      "barrio": "Cerro",
+      "direccion": "Rafael Núñez 4580",
+      "instagram": "https://instagram.com/jabugo_almacen_gourmet"
+    },
+    {
+      "nombre": "Casa Savia",
+      "ciudad": "Córdoba",
+      "barrio": "Cerro",
+      "direccion": "Balcarce 420",
+      "instagram": "https://instagram.com/casasavia.cba"
+    },
+    {
+      "nombre": "Almacén de Mario",
+      "ciudad": "Córdoba",
+      "barrio": "Cerro",
+      "direccion": "Gauss y Blas Pascal"
+    },
+    {
+      "nombre": "Gruyere 2",
+      "ciudad": "Córdoba",
+      "barrio": "Zona Sur",
+      "direccion": "Colinas de Manantiales, Mz 69 Lote 6"
+    },
+    {
+      "nombre": "Pueblo Serrano",
+      "ciudad": "Villa Allende",
+      "barrio": "Villa Allende",
+      "direccion": "Río de Janeiro 657",
+      "instagram": "https://instagram.com/puebloserrano.va"
+    },
+    {
+      "nombre": "Cerutti",
+      "ciudad": "Río Cuarto",
+      "direccion": "Moreno 1503",
+      "instagram": "https://instagram.com/ceruttisocial"
+    },
+    {
+      "nombre": "La Familia",
+      "ciudad": "Río Cuarto",
+      "direccion": "Moreno 545",
+      "instagram": "https://instagram.com/lafamiliafiambreria"
+    },
+    {
+      "nombre": "Al Dente",
+      "ciudad": "Río Cuarto",
+      "direccion": "Fray Quirico Porreca 547",
+      "instagram": "https://instagram.com/aldenteriocuarto"
+    },
+    {
+      "nombre": "Espacio Gourmet",
+      "ciudad": "Río Cuarto",
+      "direccion": "San Martín 154",
+      "instagram": "https://instagram.com/espaciogourmetrio4"
+    },
+    {
+      "nombre": "Benavidez",
+      "ciudad": "Buenos Aires",
+      "barrio": "Palermo"
+    },
+    {
+      "nombre": "L'Artigiano",
+      "ciudad": "Buenos Aires",
+      "barrio": "Palermo"
+    },
+    {
+      "nombre": "Mancheese",
+      "ciudad": "Buenos Aires",
+      "barrio": "Palermo"
+    },
+    {
+      "nombre": "Nicolino",
+      "ciudad": "Buenos Aires",
+      "barrio": "Belgrano"
+    },
+    {
+      "nombre": "Delicatto",
+      "ciudad": "Buenos Aires",
+      "barrio": "Recoleta"
+    },
+    {
+      "nombre": "La Tradicional",
+      "ciudad": "Buenos Aires",
+      "barrio": "Recoleta"
+    },
+    {
+      "nombre": "Singluteria",
+      "ciudad": "Buenos Aires",
+      "barrio": "Centro"
+    },
+    {
+      "nombre": "Proviamo",
+      "ciudad": "Buenos Aires",
+      "barrio": "Centro"
+    },
+    {
+      "nombre": "Sin Gluten Olivos",
+      "ciudad": "Olivos",
+      "barrio": "Zona Norte"
+    }
+  ]
 }

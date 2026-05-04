@@ -13,8 +13,10 @@ export const RESPONSES = {
       const shown = stores.slice(0, 3);
       const lines = shown
         .map((s) => {
+          const barrio = s.barrio && s.barrio !== s.ciudad ? ` (${s.barrio})` : "";
+          const dir = s.direccion ? ` — ${s.direccion}` : "";
           const link = s.maps || s.instagram || "";
-          return link ? `• ${s.nombre}: ${link}` : `• ${s.nombre}`;
+          return link ? `• ${s.nombre}${barrio}${dir}\n  ${link}` : `• ${s.nombre}${barrio}${dir}`;
         })
         .join("\n");
       const extra = stores.length > 3 ? `\n...y ${stores.length - 3} más.` : "";

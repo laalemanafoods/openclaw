@@ -5,6 +5,7 @@ export type PuntoDeVenta = {
   nombre: string;
   ciudad: string;
   barrio?: string;
+  direccion?: string;
   maps?: string;
   instagram?: string;
 };
