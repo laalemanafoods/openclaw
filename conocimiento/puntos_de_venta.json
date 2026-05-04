@@ -101,7 +101,9 @@
     {
       "nombre": "Sin Gluten Olivos",
       "ciudad": "Olivos",
-      "barrio": "Zona Norte"
+      "barrio": "Zona Norte",
+      "direccion": "Av. Maipú 1779",
+      "instagram": "https://instagram.com/singlutenolivosbaires"
     }
   ]
 }
