@@ -8,6 +8,10 @@ function formatStore(s: PuntoDeVenta): string {
 
 export const RESPONSES = {
   consumer: {
+    pricePolicy(): string {
+      return "Los precios varían según cada punto de venta minorista, pero te ayudo a encontrar el local más cercano para que consultes ahí directamente. 😊 ¿En qué ciudad o barrio estás?";
+    },
+
     askCity(): string {
       return (
         "¡Hola! Qué gusto saludarte. Soy La Alemanita Digital, la asistente oficial de La Alemana Foods 😊\n\n" +

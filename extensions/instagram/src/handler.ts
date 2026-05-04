@@ -87,6 +87,18 @@ function askingWhereToBuy(text: string): boolean {
   return PURCHASE_KEYWORDS.some((kw) => q.includes(normalize(kw)));
 }
 
+const PRICE_KEYWORDS = [
+  "precio", "precios", "cuánto cuesta", "cuanto cuesta", "cuánto sale", "cuanto sale",
+  "cuánto vale", "cuanto vale", "cuánto están", "cuanto estan", "qué precio",
+  "que precio", "tienen precio", "precio tiene", "cuánto cobran", "cuanto cobran",
+  "precio de", "valor de", "cuánto es", "cuanto es",
+];
+
+function askingAboutPrice(text: string): boolean {
+  const q = normalize(text);
+  return PRICE_KEYWORDS.some((kw) => q.includes(normalize(kw)));
+}
+
 // ---------------------------------------------------------------------------
 // Consumer location flow helpers
 // ---------------------------------------------------------------------------
@@ -123,6 +135,15 @@ async function sendAllForCity(senderId: string, cityName: string): Promise<void>
 // ---------------------------------------------------------------------------
 async function handleMessage(senderId: string, text: string): Promise<void> {
   const session = getSession(senderId);
+
+  // Price policy: intercept price questions for consumer/unknown sessions
+  if (
+    (session.segment === "unknown" || session.segment === "consumer") &&
+    askingAboutPrice(text)
+  ) {
+    await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.pricePolicy() });
+    return;
+  }
 
   // B2B data collection
   if (session.segment === "b2b" && session.step === "collecting") {
