@@ -15,7 +15,7 @@ export async function sendInstagramReply(params: {
   }
 
   try {
-    const resp = await fetch(`https://graph.facebook.com/v18.0/${pageId}/messages`, {
+    const resp = await fetch(`https://graph.instagram.com/v25.0/${pageId}/messages`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
