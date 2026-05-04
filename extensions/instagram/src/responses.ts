@@ -2,12 +2,9 @@ export const RESPONSES = {
   consumer: {
     info(): string {
       return (
-        "¡Hola! 👋 Somos La Alemana Foods, embutidos alemanes artesanales sin TACC.\n\n" +
-        "Nuestros productos:\n" +
-        "🥩 Para asado/plancha: Frankfurter, Thüringer, Bratwurst, Rinderwurst, Fleischkäse\n" +
-        "🌭 Para calentar (5 min): Wiener Wurst, Knackwurst, Mini Wiener\n" +
-        "🧈 Untables: Leberwurst, Panceta Ahumada\n\n" +
-        "¿Querés info de algún producto, receta o dónde conseguirnos? ¡Preguntame! 😊"
+        "¡Hola! 😊 Soy La Alemanita Digital, de La Alemana Foods.\n\n" +
+        "Para ayudarte de forma más rápida y eficiente, voy a acompañarte en los primeros pasos.\n\n" +
+        "¿En qué te puedo ayudar hoy?"
       );
     },
   },
