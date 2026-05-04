@@ -1,7 +1,7 @@
 {
   "gateway": {
     "controlUi": {
-      "allowedOrigins": ["https://explicit-emyle-laalemanafoods-d3e0894b.koyeb.app"]
+      "allowedOrigins": ["*"]
     }
   },
   "agents": {
