@@ -5,22 +5,19 @@ type ConsumerState =
   | { segment: "consumer"; step: "asking_city" }
   | { segment: "consumer"; step: "asking_barrio"; city: string };
 
-type B2BCollectingState = {
-  segment: "b2b";
-  step: "collecting";
-};
+type B2BState =
+  | { segment: "b2b"; step: "collecting" }
+  | { segment: "b2b"; step: "done" };
 
-type B2BDoneState = {
-  segment: "b2b";
-  step: "done";
-};
+type QuejaState =
+  | { segment: "queja"; step: "collecting" }
+  | { segment: "queja"; step: "done" };
 
 type SessionState =
   | ConsumerState
+  | B2BState
+  | QuejaState
   | { segment: "vendedor" }
-  | { segment: "queja" }
-  | B2BCollectingState
-  | B2BDoneState
   | { segment: "unknown" };
 
 const sessions = new Map<string, SessionState>();

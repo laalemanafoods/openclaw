@@ -152,10 +152,23 @@ async function handleMessage(senderId: string, text: string): Promise<void> {
     const whatsapp = extractField(text, "whatsapp") ?? extractField(text, "wp") ?? extractField(text, "wsp") ?? extractPhone(text) ?? "no informado";
 
     setSession(senderId, { segment: "b2b", step: "done" });
-    const extraInfo = `Negocio: ${negocio} | Ciudad: ${ciudad} | WhatsApp: ${whatsapp}`;
     await Promise.all([
       sendInstagramReply({ recipientId: senderId, text: RESPONSES.b2b.confirmation(negocio) }),
-      sendTelegramNotification({ clientName: negocio, segment: "b2b", senderId, extraInfo }),
+      sendTelegramNotification({ segment: "b2b", negocio, ciudad, whatsapp, senderId }),
+    ]);
+    return;
+  }
+
+  // Queja data collection
+  if (session.segment === "queja" && session.step === "collecting") {
+    const nombre = extractField(text, "nombre") ?? `Usuario IG ${senderId.slice(-6)}`;
+    const whatsapp = extractField(text, "whatsapp") ?? extractField(text, "wp") ?? extractField(text, "wsp") ?? extractPhone(text) ?? "no informado";
+    const descripcion = text.slice(0, 300);
+
+    setSession(senderId, { segment: "queja", step: "done" });
+    await Promise.all([
+      sendInstagramReply({ recipientId: senderId, text: RESPONSES.queja.confirmation(nombre) }),
+      sendTelegramNotification({ segment: "queja", nombre, whatsapp, descripcion, senderId }),
     ]);
     return;
   }
@@ -246,16 +259,8 @@ async function handleMessage(senderId: string, text: string): Promise<void> {
       break;
     }
     case "queja": {
-      setSession(senderId, { segment: "queja" });
-      await Promise.all([
-        sendInstagramReply({ recipientId: senderId, text: RESPONSES.queja.initial() }),
-        sendTelegramNotification({
-          clientName: `Usuario IG ${senderId.slice(-6)}`,
-          segment: "queja",
-          senderId,
-          extraInfo: text.slice(0, 300),
-        }),
-      ]);
+      setSession(senderId, { segment: "queja", step: "collecting" });
+      await sendInstagramReply({ recipientId: senderId, text: RESPONSES.queja.askForData() });
       break;
     }
     case "vendedor": {

@@ -1,11 +1,25 @@
-// Sends Telegram notifications when a B2B lead completes data or a complaint is received.
+// Sends Telegram notifications for B2B leads and complaints.
 
-export type TelegramParams = {
-  clientName: string;
-  segment: "b2b" | "queja";
-  senderId: string;
-  extraInfo?: string;
-};
+export type TelegramParams =
+  | { segment: "b2b"; negocio: string; ciudad: string; whatsapp: string; senderId: string }
+  | { segment: "queja"; nombre: string; whatsapp: string; descripcion: string; senderId: string };
+
+function buildMessage(params: TelegramParams): string {
+  const igLink = `https://www.instagram.com/direct/t/${params.senderId}`;
+  if (params.segment === "b2b") {
+    return (
+      `🏷️ <b>Nuevo Interesado Mayorista</b>\n` +
+      `${params.negocio} | 📍 ${params.ciudad} | 📱 WhatsApp: ${params.whatsapp}\n` +
+      `🔗 IG: ${igLink}`
+    );
+  }
+  return (
+    `⚠️ <b>Nuevo Reclamo Recibido</b>\n` +
+    `Cliente: ${params.nombre} | 📱 WhatsApp: ${params.whatsapp}\n` +
+    `📋 Problema: ${params.descripcion.slice(0, 300)}\n` +
+    `🔗 IG: ${igLink}`
+  );
+}
 
 export async function sendTelegramNotification(params: TelegramParams): Promise<void> {
   const token = process.env["TELEGRAM_BOT_TOKEN"];
@@ -16,25 +30,13 @@ export async function sendTelegramNotification(params: TelegramParams): Promise<
     return;
   }
 
-  const segmentLabel = params.segment === "b2b" ? "📦 Cliente B2B" : "⚠️ Queja";
-  const igLink = `https://www.instagram.com/direct/t/${params.senderId}`;
-
-  const lines = [
-    `<b>${segmentLabel} — La Alemana Foods</b>`,
-    `👤 Cliente: ${params.clientName}`,
-    `🔗 Conversación IG: ${igLink}`,
-  ];
-  if (params.extraInfo) {
-    lines.push(`📝 Detalles: ${params.extraInfo.slice(0, 300)}`);
-  }
-
   try {
     const resp = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         chat_id: chatId,
-        text: lines.join("\n"),
+        text: buildMessage(params),
         parse_mode: "HTML",
       }),
     });

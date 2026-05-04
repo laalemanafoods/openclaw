@@ -74,11 +74,21 @@ export const RESPONSES = {
   },
 
   queja: {
-    initial(): string {
+    askForData(): string {
       return (
         "Lo sentimos mucho, eso no debería pasar 😟\n\n" +
-        "Contame qué pasó, dónde compraste el producto y si podés mandarnos una foto.\n\n" +
-        "Nuestro equipo humano te va a responder a la brevedad. ¿Podés contarnos más?"
+        "Para darte el mejor seguimiento, necesito:\n\n" +
+        "• Tu nombre:\n" +
+        "• WhatsApp:\n" +
+        "• Descripción breve del problema:\n\n" +
+        "El equipo te va a contactar a la brevedad."
+      );
+    },
+
+    confirmation(nombre: string): string {
+      return (
+        `Gracias ${nombre}, ya le avisé al equipo 🙌\n\n` +
+        "Te van a contactar a la brevedad por WhatsApp. ¿Hay algo más en lo que te pueda ayudar?"
       );
     },
   },
