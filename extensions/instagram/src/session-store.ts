@@ -2,7 +2,8 @@
 
 type ConsumerState =
   | { segment: "consumer" }
-  | { segment: "consumer"; step: "asking_city" };
+  | { segment: "consumer"; step: "asking_city" }
+  | { segment: "consumer"; step: "asking_barrio"; city: string };
 
 type B2BCollectingState = {
   segment: "b2b";
@@ -22,7 +23,6 @@ type SessionState =
   | B2BDoneState
   | { segment: "unknown" };
 
-// In-memory store — resets on process restart. Sufficient for stateless Railway instances.
 const sessions = new Map<string, SessionState>();
 
 export function getSession(senderId: string): SessionState {

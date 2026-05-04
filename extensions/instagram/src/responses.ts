@@ -1,5 +1,11 @@
 import type { PuntoDeVenta } from "./puntos-de-venta.js";
 
+function formatStore(s: PuntoDeVenta): string {
+  const dir = s.direccion ? ` 📍 ${s.direccion}` : "";
+  const handle = s.instagram ? ` ${s.instagram}` : "";
+  return `• **${s.nombre}**${dir}${handle}`;
+}
+
 export const RESPONSES = {
   consumer: {
     askCity(): string {
@@ -13,18 +19,26 @@ export const RESPONSES = {
       return "¡Hola! Qué gusto saludarte. 😊 Claro, te ayudo con eso. ¿En qué ciudad o barrio estás?";
     },
 
-    storeFound(stores: PuntoDeVenta[]): string {
-      const shown = stores.slice(0, 3);
-      const lines = shown
-        .map((s) => {
-          const barrio = s.barrio && s.barrio !== s.ciudad ? ` (${s.barrio})` : "";
-          const dir = s.direccion ? ` — ${s.direccion}` : "";
-          const handle = s.instagram ? ` ${s.instagram}` : "";
-          return `• ${s.nombre}${barrio}${dir}${handle}`;
+    askBarrio(cityName: string): string {
+      return (
+        `¡Qué bueno! En ${cityName} tenemos muchísimos puntos de venta 😊\n\n` +
+        "¿En qué barrio o zona estás específicamente? Así te paso los que te queden más cómodos."
+      );
+    },
+
+    storeFound(locationName: string, stores: PuntoDeVenta[]): string {
+      const lines = stores.map(formatStore).join("\n");
+      return `¡Claro! Te cuento dónde podés encontrar nuestros productos en ${locationName}:\n\n${lines}\n\n¿Necesitás algo más? 😊`;
+    },
+
+    storeFoundGrouped(locationName: string, groups: Map<string, PuntoDeVenta[]>): string {
+      const body = Array.from(groups.entries())
+        .map(([barrio, stores]) => {
+          const lines = stores.map(formatStore).join("\n");
+          return `${barrio.toUpperCase()}\n${lines}`;
         })
-        .join("\n");
-      const extra = stores.length > 3 ? `\n...y ${stores.length - 3} más.` : "";
-      return `Acá podés conseguirnos 📍\n\n${lines}${extra}\n\n¿Necesitás algo más?`;
+        .join("\n\n");
+      return `¡Claro! Te cuento dónde podés encontrar nuestros productos en ${locationName}:\n\n${body}\n\n¿Necesitás algo más? 😊`;
     },
 
     noStore(tiendaOnline: string): string {
@@ -49,7 +63,7 @@ export const RESPONSES = {
 
     confirmation(negocio: string): string {
       return (
-        `¡Perfecto, ${negocio}! Le paso tus datos al equipo comercial y te escriben por WhatsApp a la brevedad 🙌\n\n` +
+        `¡Perfecto, ${negocio}! Le paso tus datos al equipo comercial y te van a escribir por WhatsApp a la brevedad 🙌\n\n` +
         "¿Hay algo más en lo que te pueda ayudar?"
       );
     },

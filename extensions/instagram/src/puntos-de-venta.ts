@@ -29,18 +29,55 @@ function load(): { tienda_online: string; puntos: PuntoDeVenta[] } {
   }
 }
 
-export function findStoresByLocation(query: string): PuntoDeVenta[] {
+// Matches only by barrio field (not ciudad).
+export function findByBarrioOnly(query: string): PuntoDeVenta[] {
+  const { puntos } = load();
+  const q = norm(query);
+  return puntos.filter((p) => {
+    const barrio = norm(p.barrio ?? "");
+    return barrio && (q.includes(barrio) || barrio.includes(q));
+  });
+}
+
+// Matches only by ciudad field (not barrio).
+export function findByCityOnly(query: string): PuntoDeVenta[] {
   const { puntos } = load();
   const q = norm(query);
   return puntos.filter((p) => {
     const ciudad = norm(p.ciudad);
-    const barrio = norm(p.barrio ?? "");
-    return (
-      q.includes(ciudad) ||
-      ciudad.includes(q) ||
-      (barrio && (q.includes(barrio) || barrio.includes(q)))
-    );
+    return q.includes(ciudad) || ciudad.includes(q);
   });
+}
+
+// Returns all stores for an exact city name.
+export function getAllForCity(cityName: string): PuntoDeVenta[] {
+  const { puntos } = load();
+  const c = norm(cityName);
+  return puntos.filter((p) => norm(p.ciudad) === c);
+}
+
+// True if the store list has more than one distinct barrio.
+export function hasDistinctBarrios(stores: PuntoDeVenta[]): boolean {
+  const barrios = new Set(stores.map((s) => s.barrio).filter(Boolean));
+  return barrios.size > 1;
+}
+
+// Groups stores by barrio, preserving insertion order.
+export function groupByBarrio(stores: PuntoDeVenta[]): Map<string, PuntoDeVenta[]> {
+  const groups = new Map<string, PuntoDeVenta[]>();
+  for (const store of stores) {
+    const key = store.barrio ?? "Otros";
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(store);
+  }
+  return groups;
+}
+
+// Original combined lookup (barrio OR ciudad).
+export function findStoresByLocation(query: string): PuntoDeVenta[] {
+  const byBarrio = findByBarrioOnly(query);
+  if (byBarrio.length > 0) return byBarrio;
+  return findByCityOnly(query);
 }
 
 export function getOnlineStoreUrl(): string {

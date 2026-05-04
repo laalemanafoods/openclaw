@@ -3,7 +3,14 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { classifyMessage } from "./classifier.js";
 import { sendInstagramReply } from "./instagram-api.js";
-import { findStoresByLocation, getOnlineStoreUrl } from "./puntos-de-venta.js";
+import {
+  findByBarrioOnly,
+  findByCityOnly,
+  getAllForCity,
+  getOnlineStoreUrl,
+  groupByBarrio,
+  hasDistinctBarrios,
+} from "./puntos-de-venta.js";
 import { RESPONSES } from "./responses.js";
 import { getSession, setSession } from "./session-store.js";
 import { sendTelegramNotification } from "./telegram.js";
@@ -19,11 +26,9 @@ function isTestModeEnabled(): boolean {
 
 function isAllowedInTestMode(senderId: string, text: string): boolean {
   if (!isTestModeEnabled()) return true;
-
   const authorizedSenderId = process.env["INSTAGRAM_TEST_SENDER_ID"]?.trim();
   if (authorizedSenderId && senderId === authorizedSenderId) return true;
   if (text.includes("ACTIVAR_TEST")) return true;
-
   return false;
 }
 
@@ -45,41 +50,12 @@ async function readBody(req: IncomingMessage, maxBytes = 512 * 1024): Promise<st
     let total = 0;
     req.on("data", (chunk: Buffer) => {
       total += chunk.length;
-      if (total > maxBytes) {
-        reject(new Error("Payload too large"));
-        return;
-      }
+      if (total > maxBytes) { reject(new Error("Payload too large")); return; }
       chunks.push(chunk);
     });
     req.on("end", () => resolve(Buffer.concat(chunks).toString("utf-8")));
     req.on("error", reject);
   });
-}
-
-function normalize(text: string): string {
-  return text
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "");
-}
-
-const PURCHASE_KEYWORDS = [
-  "donde comprar",
-  "dónde comprar",
-  "donde conseguir",
-  "dónde conseguir",
-  "donde lo consigo",
-  "donde encuentro",
-  "dónde encuentro",
-  "punto de venta",
-  "puntos de venta",
-  "donde venden",
-  "dónde venden",
-];
-
-function askingWhereToBuy(text: string): boolean {
-  const q = normalize(text);
-  return PURCHASE_KEYWORDS.some((kw) => q.includes(normalize(kw)));
 }
 
 function extractField(text: string, fieldName: string): string | undefined {
@@ -96,33 +72,66 @@ function extractPhone(text: string): string | undefined {
   return match?.[1]?.trim() || undefined;
 }
 
+function normalize(text: string): string {
+  return text.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+}
+
+const PURCHASE_KEYWORDS = [
+  "donde comprar", "dónde comprar", "donde conseguir", "dónde conseguir",
+  "donde lo consigo", "donde encuentro", "dónde encuentro",
+  "punto de venta", "puntos de venta", "donde venden", "dónde venden",
+];
+
+function askingWhereToBuy(text: string): boolean {
+  const q = normalize(text);
+  return PURCHASE_KEYWORDS.some((kw) => q.includes(normalize(kw)));
+}
+
+// ---------------------------------------------------------------------------
+// Consumer location flow helpers
+// ---------------------------------------------------------------------------
+async function sendStoresByBarrio(senderId: string, locationName: string, stores: ReturnType<typeof findByBarrioOnly>): Promise<void> {
+  await sendInstagramReply({
+    recipientId: senderId,
+    text: RESPONSES.consumer.storeFound(locationName, stores),
+  });
+}
+
+async function sendAllForCity(senderId: string, cityName: string): Promise<void> {
+  const all = getAllForCity(cityName);
+  if (all.length === 0) {
+    const tiendaOnline = getOnlineStoreUrl();
+    await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.noStore(tiendaOnline) });
+    return;
+  }
+  if (hasDistinctBarrios(all)) {
+    const groups = groupByBarrio(all);
+    await sendInstagramReply({
+      recipientId: senderId,
+      text: RESPONSES.consumer.storeFoundGrouped(cityName, groups),
+    });
+  } else {
+    await sendInstagramReply({
+      recipientId: senderId,
+      text: RESPONSES.consumer.storeFound(cityName, all),
+    });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Main message handler
+// ---------------------------------------------------------------------------
 async function handleMessage(senderId: string, text: string): Promise<void> {
   const session = getSession(senderId);
 
-  // B2B data collection response
+  // B2B data collection
   if (session.segment === "b2b" && session.step === "collecting") {
-    const negocio =
-      extractField(text, "negocio") ??
-      extractField(text, "local") ??
-      extractField(text, "empresa") ??
-      `Negocio ${senderId.slice(-6)}`;
-    const ciudad =
-      extractField(text, "ciudad") ??
-      extractField(text, "ubicación") ??
-      extractField(text, "ubicacion") ??
-      extractField(text, "barrio") ??
-      "no informada";
-    const whatsapp =
-      extractField(text, "whatsapp") ??
-      extractField(text, "wp") ??
-      extractField(text, "wsp") ??
-      extractPhone(text) ??
-      "no informado";
+    const negocio = extractField(text, "negocio") ?? extractField(text, "local") ?? extractField(text, "empresa") ?? `Negocio ${senderId.slice(-6)}`;
+    const ciudad = extractField(text, "ciudad") ?? extractField(text, "ubicación") ?? extractField(text, "ubicacion") ?? extractField(text, "barrio") ?? "no informada";
+    const whatsapp = extractField(text, "whatsapp") ?? extractField(text, "wp") ?? extractField(text, "wsp") ?? extractPhone(text) ?? "no informado";
 
     setSession(senderId, { segment: "b2b", step: "done" });
-
     const extraInfo = `Negocio: ${negocio} | Ciudad: ${ciudad} | WhatsApp: ${whatsapp}`;
-
     await Promise.all([
       sendInstagramReply({ recipientId: senderId, text: RESPONSES.b2b.confirmation(negocio) }),
       sendTelegramNotification({ clientName: negocio, segment: "b2b", senderId, extraInfo }),
@@ -130,29 +139,78 @@ async function handleMessage(senderId: string, text: string): Promise<void> {
     return;
   }
 
-  // Consumer city lookup response
-  if (session.segment === "consumer" && "step" in session && session.step === "asking_city") {
-    setSession(senderId, { segment: "consumer" });
-    const stores = findStoresByLocation(text);
-    if (stores.length > 0) {
-      await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.storeFound(stores) });
+  // Consumer: waiting for barrio refinement after showing big city
+  if (session.segment === "consumer" && "step" in session && session.step === "asking_barrio") {
+    const savedCity = session.city;
+    const byBarrio = findByBarrioOnly(text);
+    if (byBarrio.length > 0) {
+      setSession(senderId, { segment: "consumer" });
+      const barrio = byBarrio[0]?.barrio ?? text;
+      await sendStoresByBarrio(senderId, barrio, byBarrio);
     } else {
-      const tiendaOnline = getOnlineStoreUrl();
-      await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.noStore(tiendaOnline) });
+      // User didn't specify barrio or repeated the city → show all grouped
+      setSession(senderId, { segment: "consumer" });
+      await sendAllForCity(senderId, savedCity);
     }
     return;
   }
 
+  // Consumer: waiting for city/barrio (initial ask)
+  if (session.segment === "consumer" && "step" in session && session.step === "asking_city") {
+    setSession(senderId, { segment: "consumer" });
+
+    const byBarrio = findByBarrioOnly(text);
+    if (byBarrio.length > 0) {
+      const barrio = byBarrio[0]?.barrio ?? text;
+      await sendStoresByBarrio(senderId, barrio, byBarrio);
+      return;
+    }
+
+    const byCity = findByCityOnly(text);
+    if (byCity.length > 0) {
+      const cityName = byCity[0]!.ciudad;
+      if (hasDistinctBarrios(byCity)) {
+        setSession(senderId, { segment: "consumer", step: "asking_barrio", city: cityName });
+        await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.askBarrio(cityName) });
+      } else {
+        await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.storeFound(cityName, byCity) });
+      }
+      return;
+    }
+
+    const tiendaOnline = getOnlineStoreUrl();
+    await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.noStore(tiendaOnline) });
+    return;
+  }
+
+  // New message — classify fresh
   const segment = classifyMessage(text);
 
   switch (segment) {
     case "consumer": {
-      // If the first message already contains a city/barrio, skip asking and lookup directly
-      const storesInFirstMsg = findStoresByLocation(text);
-      if (storesInFirstMsg.length > 0) {
+      // Check if barrio is in the message
+      const byBarrio = findByBarrioOnly(text);
+      if (byBarrio.length > 0) {
         setSession(senderId, { segment: "consumer" });
-        await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.storeFound(storesInFirstMsg) });
-      } else if (askingWhereToBuy(text)) {
+        const barrio = byBarrio[0]?.barrio ?? text;
+        await sendStoresByBarrio(senderId, barrio, byBarrio);
+        break;
+      }
+      // Check if city is in the message
+      const byCity = findByCityOnly(text);
+      if (byCity.length > 0) {
+        const cityName = byCity[0]!.ciudad;
+        if (hasDistinctBarrios(byCity)) {
+          setSession(senderId, { segment: "consumer", step: "asking_barrio", city: cityName });
+          await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.askBarrio(cityName) });
+        } else {
+          setSession(senderId, { segment: "consumer" });
+          await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.storeFound(cityName, byCity) });
+        }
+        break;
+      }
+      // No location in message — ask for it
+      if (askingWhereToBuy(text)) {
         setSession(senderId, { segment: "consumer", step: "asking_city" });
         await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.askCityDirect() });
       } else {
@@ -195,22 +253,17 @@ async function processWebhookPayload(rawBody: string): Promise<void> {
     console.warn("[instagram] Payload no es JSON válido");
     return;
   }
-
-  if (payload.object !== "instagram") {
-    return;
-  }
+  if (payload.object !== "instagram") return;
 
   for (const entry of payload.entry ?? []) {
     for (const event of entry.messaging ?? []) {
       const senderId = event.sender?.id;
       const text = event.message?.text;
       if (!senderId || !text) continue;
-
       if (!isAllowedInTestMode(senderId, text)) {
         console.info(`[instagram] Mensaje de ${senderId} ignorado (filtro test mode)`);
         continue;
       }
-
       await handleMessage(senderId, text).catch((err) => {
         console.error(`[instagram] Error procesando mensaje de ${senderId}:`, err);
       });
@@ -218,10 +271,7 @@ async function processWebhookPayload(rawBody: string): Promise<void> {
   }
 }
 
-export function createInstagramWebhookHandler(): (
-  req: IncomingMessage,
-  res: ServerResponse,
-) => Promise<boolean> {
+export function createInstagramWebhookHandler(): (req: IncomingMessage, res: ServerResponse) => Promise<boolean> {
   return async (req: IncomingMessage, res: ServerResponse): Promise<boolean> => {
     const url = new URL(req.url ?? "/", "http://localhost");
 
@@ -230,7 +280,6 @@ export function createInstagramWebhookHandler(): (
       const token = url.searchParams.get("hub.verify_token");
       const challenge = url.searchParams.get("hub.challenge");
       const verifyToken = process.env["INSTAGRAM_VERIFY_TOKEN"];
-
       if (mode === "subscribe" && token && verifyToken && token === verifyToken && challenge) {
         res.statusCode = 200;
         res.setHeader("Content-Type", "text/plain");
@@ -252,15 +301,12 @@ export function createInstagramWebhookHandler(): (
         res.end("EVENT_RECEIVED");
         return true;
       }
-
       res.statusCode = 200;
       res.setHeader("Content-Type", "text/plain");
       res.end("EVENT_RECEIVED");
-
       processWebhookPayload(rawBody).catch((err) => {
         console.error("[instagram] Error procesando payload:", err);
       });
-
       return true;
     }
 
