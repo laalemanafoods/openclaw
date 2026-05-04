@@ -56,6 +56,32 @@ async function readBody(req: IncomingMessage, maxBytes = 512 * 1024): Promise<st
   });
 }
 
+function normalize(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "");
+}
+
+const PURCHASE_KEYWORDS = [
+  "donde comprar",
+  "dónde comprar",
+  "donde conseguir",
+  "dónde conseguir",
+  "donde lo consigo",
+  "donde encuentro",
+  "dónde encuentro",
+  "punto de venta",
+  "puntos de venta",
+  "donde venden",
+  "dónde venden",
+];
+
+function askingWhereToBuy(text: string): boolean {
+  const q = normalize(text);
+  return PURCHASE_KEYWORDS.some((kw) => q.includes(normalize(kw)));
+}
+
 function extractField(text: string, fieldName: string): string | undefined {
   const regex = new RegExp(
     `${fieldName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}[:\\-\\s]+([^\\n•\\-,]+)`,
@@ -121,8 +147,18 @@ async function handleMessage(senderId: string, text: string): Promise<void> {
 
   switch (segment) {
     case "consumer": {
-      setSession(senderId, { segment: "consumer", step: "asking_city" });
-      await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.askCity() });
+      // If the first message already contains a city/barrio, skip asking and lookup directly
+      const storesInFirstMsg = findStoresByLocation(text);
+      if (storesInFirstMsg.length > 0) {
+        setSession(senderId, { segment: "consumer" });
+        await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.storeFound(storesInFirstMsg) });
+      } else if (askingWhereToBuy(text)) {
+        setSession(senderId, { segment: "consumer", step: "asking_city" });
+        await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.askCityDirect() });
+      } else {
+        setSession(senderId, { segment: "consumer", step: "asking_city" });
+        await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.askCity() });
+      }
       break;
     }
     case "b2b": {

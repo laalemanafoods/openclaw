@@ -9,14 +9,18 @@ export const RESPONSES = {
       );
     },
 
+    askCityDirect(): string {
+      return "¡Hola! Qué gusto saludarte. 😊 Claro, te ayudo con eso. ¿En qué ciudad o barrio estás?";
+    },
+
     storeFound(stores: PuntoDeVenta[]): string {
       const shown = stores.slice(0, 3);
       const lines = shown
         .map((s) => {
           const barrio = s.barrio && s.barrio !== s.ciudad ? ` (${s.barrio})` : "";
           const dir = s.direccion ? ` — ${s.direccion}` : "";
-          const link = s.maps || s.instagram || "";
-          return link ? `• ${s.nombre}${barrio}${dir}\n  ${link}` : `• ${s.nombre}${barrio}${dir}`;
+          const handle = s.instagram ? ` ${s.instagram}` : "";
+          return `• ${s.nombre}${barrio}${dir}${handle}`;
         })
         .join("\n");
       const extra = stores.length > 3 ? `\n...y ${stores.length - 3} más.` : "";
