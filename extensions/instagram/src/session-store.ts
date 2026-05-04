@@ -1,9 +1,12 @@
-// Conversation state tracking across messages for multi-turn flows (B2B data collection).
+// Conversation state tracking across messages for multi-turn flows.
+
+type ConsumerState =
+  | { segment: "consumer" }
+  | { segment: "consumer"; step: "asking_city" };
 
 type B2BCollectingState = {
   segment: "b2b";
   step: "collecting";
-  data: Partial<{ nombre: string; telefono: string; negocio: string; ubicacion: string }>;
 };
 
 type B2BDoneState = {
@@ -12,7 +15,7 @@ type B2BDoneState = {
 };
 
 type SessionState =
-  | { segment: "consumer" }
+  | ConsumerState
   | { segment: "vendedor" }
   | { segment: "queja" }
   | B2BCollectingState

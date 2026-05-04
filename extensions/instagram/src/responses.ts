@@ -1,37 +1,50 @@
+import type { PuntoDeVenta } from "./puntos-de-venta.js";
+
 export const RESPONSES = {
   consumer: {
-    info(): string {
+    askCity(): string {
       return (
-        "¡Hola! 😊 Soy La Alemanita, tu asistente de La Alemana Foods.\n\n" +
-        "Estoy acá para ayudarte con lo que necesites. ¿En qué te puedo ayudar hoy?"
+        "¡Hola! Qué gusto saludarte 😊 Soy La Alemanita, de La Alemana Foods.\n\n" +
+        "¿En qué ciudad o barrio estás? Así te cuento el punto de venta más cercano."
       );
+    },
+
+    storeFound(stores: PuntoDeVenta[]): string {
+      const shown = stores.slice(0, 3);
+      const lines = shown
+        .map((s) => {
+          const link = s.maps || s.instagram || "";
+          return link ? `• ${s.nombre}: ${link}` : `• ${s.nombre}`;
+        })
+        .join("\n");
+      const extra = stores.length > 3 ? `\n...y ${stores.length - 3} más.` : "";
+      return `¡Genial! Acá podés conseguirnos:\n\n${lines}${extra}\n\n¿Necesitás algo más? 😊`;
+    },
+
+    noStore(tiendaOnline: string): string {
+      const link = tiendaOnline
+        ? `\n\nPodés comprarnos online acá: ${tiendaOnline} 🛒`
+        : "";
+      return `Por ahora no tenemos un punto de venta en tu zona 😊${link}\n\n¿Te puedo ayudar con algo más?`;
     },
   },
 
   b2b: {
     askForData(): string {
       return (
-        "¡Hola! Me alegra que quieras trabajar con nosotros 🤝\n\n" +
-        "Para mandarte los precios necesito estos datos:\n\n" +
-        "• Nombre:\n" +
-        "• Teléfono:\n" +
+        "¡Qué bueno que quieras sumarte con tu local! 🥩 Tenemos condiciones especiales para revendedores.\n\n" +
+        "Para contactarte necesito:\n\n" +
         "• Nombre del negocio:\n" +
-        "• Barrio/ciudad:\n\n" +
-        "¡Completalos y te mando todo enseguida! ✍️"
+        "• Ciudad:\n" +
+        "• WhatsApp:\n\n" +
+        "¡Completalos y te escribimos pronto! ✍️"
       );
     },
 
-    sendPrices(nombre: string, negocio: string): string {
-      void negocio;
+    confirmation(negocio: string): string {
       return (
-        `¡Gracias, ${nombre}! Acá van los precios 👇\n\n` +
-        "Pack pequeño (Retail):\n" +
-        "Frankfurter $7.466 | Thüringer $7.563\n" +
-        "Rinderwurst $8.833 | Wiener $7.466 | Leberwurst $5.506\n\n" +
-        "Pack ~1kg (Gastronomía):\n" +
-        "Frankfurter $14.484 | Thüringer $14.544\n" +
-        "Rinderwurst $16.577 | Wiener $12.463 | Leberwurst $13.262\n\n" +
-        "Alguien del equipo te va a escribir pronto. ¡Bienvenido! 🥩"
+        `¡Perfecto, ${negocio}! 🙌 Le paso tus datos al equipo comercial y te van a escribir por WhatsApp a la brevedad.\n\n` +
+        "¡Gracias por elegirnos!"
       );
     },
   },

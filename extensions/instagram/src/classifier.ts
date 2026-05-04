@@ -34,6 +34,13 @@ const B2B_KEYWORDS = [
   "precio mayorista",
   "lista de precios",
   "lista precio",
+  "revender",
+  "revendedor",
+  "revendedora",
+  "para mi negocio",
+  "precios por cantidad",
+  "quiero revender",
+  "para el local",
 ];
 
 const QUEJA_KEYWORDS = [
@@ -71,8 +78,6 @@ const VENDEDOR_KEYWORDS = [
   "vendedor",
   "vendedora",
   "quiero vender",
-  "revender",
-  "revendedor",
   "representante",
   "distribuir",
   "ser distribuidor",

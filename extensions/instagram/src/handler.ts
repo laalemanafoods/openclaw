@@ -3,24 +3,22 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { classifyMessage } from "./classifier.js";
 import { sendInstagramReply } from "./instagram-api.js";
+import { findStoresByLocation, getOnlineStoreUrl } from "./puntos-de-venta.js";
 import { RESPONSES } from "./responses.js";
 import { getSession, setSession } from "./session-store.js";
 import { sendTelegramNotification } from "./telegram.js";
 
 // ---------------------------------------------------------------------------
 // Test Mode Filter
-// El bot SOLO responde si el remitente es el usuario de prueba autorizado
-// (INSTAGRAM_TEST_SENDER_ID) O si el mensaje contiene 'ACTIVAR_TEST'.
-// Configurar INSTAGRAM_TEST_MODE=false (o eliminar la var) para producción.
 // ---------------------------------------------------------------------------
 function isTestModeEnabled(): boolean {
   const raw = process.env["INSTAGRAM_TEST_MODE"];
-  if (!raw) return true; // activado por defecto hasta que Sebastian lo desactive
+  if (!raw) return true;
   return raw.trim().toLowerCase() !== "false" && raw.trim() !== "0";
 }
 
 function isAllowedInTestMode(senderId: string, text: string): boolean {
-  if (!isTestModeEnabled()) return true; // modo producción: todos pasan
+  if (!isTestModeEnabled()) return true;
 
   const authorizedSenderId = process.env["INSTAGRAM_TEST_SENDER_ID"]?.trim();
   if (authorizedSenderId && senderId === authorizedSenderId) return true;
@@ -59,7 +57,6 @@ async function readBody(req: IncomingMessage, maxBytes = 512 * 1024): Promise<st
 }
 
 function extractField(text: string, fieldName: string): string | undefined {
-  // Matches "Nombre: Juan" or "Nombre - Juan" patterns, case-insensitive.
   const regex = new RegExp(
     `${fieldName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}[:\\-\\s]+([^\\n•\\-,]+)`,
     "i",
@@ -69,45 +66,54 @@ function extractField(text: string, fieldName: string): string | undefined {
 }
 
 function extractPhone(text: string): string | undefined {
-  const match = text.match(/(?:tel[eé]fono|tel|cel|celular)?[:\s]*(\+?[\d\s\-()]{7,})/i);
+  const match = text.match(/(?:tel[eé]fono|tel|cel|celular|whatsapp|wp|wsp)?[:\s]*(\+?[\d\s\-()]{7,})/i);
   return match?.[1]?.trim() || undefined;
 }
 
 async function handleMessage(senderId: string, text: string): Promise<void> {
   const session = getSession(senderId);
 
-  // If there's an active B2B data-collection session, treat this message as the data submission.
+  // B2B data collection response
   if (session.segment === "b2b" && session.step === "collecting") {
-    const nombre =
-      extractField(text, "nombre") ??
-      extractField(text, "name") ??
-      `Cliente ${senderId.slice(-6)}`;
-    const telefono =
-      extractField(text, "teléfono") ??
-      extractField(text, "telefono") ??
-      extractField(text, "tel") ??
-      extractPhone(text) ??
-      "no informado";
     const negocio =
       extractField(text, "negocio") ??
       extractField(text, "local") ??
       extractField(text, "empresa") ??
-      "su negocio";
-    const ubicacion =
+      `Negocio ${senderId.slice(-6)}`;
+    const ciudad =
+      extractField(text, "ciudad") ??
       extractField(text, "ubicación") ??
       extractField(text, "ubicacion") ??
-      extractField(text, "ciudad") ??
       extractField(text, "barrio") ??
       "no informada";
+    const whatsapp =
+      extractField(text, "whatsapp") ??
+      extractField(text, "wp") ??
+      extractField(text, "wsp") ??
+      extractPhone(text) ??
+      "no informado";
 
     setSession(senderId, { segment: "b2b", step: "done" });
 
-    const extraInfo = `Negocio: ${negocio} | Tel: ${telefono} | Ubicación: ${ubicacion}`;
+    const extraInfo = `Negocio: ${negocio} | Ciudad: ${ciudad} | WhatsApp: ${whatsapp}`;
 
     await Promise.all([
-      sendInstagramReply({ recipientId: senderId, text: RESPONSES.b2b.sendPrices(nombre, negocio) }),
-      sendTelegramNotification({ clientName: nombre, segment: "b2b", senderId, extraInfo }),
+      sendInstagramReply({ recipientId: senderId, text: RESPONSES.b2b.confirmation(negocio) }),
+      sendTelegramNotification({ clientName: negocio, segment: "b2b", senderId, extraInfo }),
     ]);
+    return;
+  }
+
+  // Consumer city lookup response
+  if (session.segment === "consumer" && "step" in session && session.step === "asking_city") {
+    setSession(senderId, { segment: "consumer" });
+    const stores = findStoresByLocation(text);
+    if (stores.length > 0) {
+      await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.storeFound(stores) });
+    } else {
+      const tiendaOnline = getOnlineStoreUrl();
+      await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.noStore(tiendaOnline) });
+    }
     return;
   }
 
@@ -115,12 +121,12 @@ async function handleMessage(senderId: string, text: string): Promise<void> {
 
   switch (segment) {
     case "consumer": {
-      setSession(senderId, { segment: "consumer" });
-      await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.info() });
+      setSession(senderId, { segment: "consumer", step: "asking_city" });
+      await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.askCity() });
       break;
     }
     case "b2b": {
-      setSession(senderId, { segment: "b2b", step: "collecting", data: {} });
+      setSession(senderId, { segment: "b2b", step: "collecting" });
       await sendInstagramReply({ recipientId: senderId, text: RESPONSES.b2b.askForData() });
       break;
     }
@@ -183,7 +189,6 @@ export function createInstagramWebhookHandler(): (
   return async (req: IncomingMessage, res: ServerResponse): Promise<boolean> => {
     const url = new URL(req.url ?? "/", "http://localhost");
 
-    // Instagram webhook verification: GET with hub.challenge
     if (req.method === "GET") {
       const mode = url.searchParams.get("hub.mode");
       const token = url.searchParams.get("hub.verify_token");
@@ -201,7 +206,6 @@ export function createInstagramWebhookHandler(): (
       return true;
     }
 
-    // Instagram events: POST with messaging payload
     if (req.method === "POST") {
       let rawBody = "";
       try {
@@ -213,12 +217,10 @@ export function createInstagramWebhookHandler(): (
         return true;
       }
 
-      // Always respond 200 first; Meta retries if we take too long.
       res.statusCode = 200;
       res.setHeader("Content-Type", "text/plain");
       res.end("EVENT_RECEIVED");
 
-      // Process async so the 200 is delivered immediately.
       processWebhookPayload(rawBody).catch((err) => {
         console.error("[instagram] Error procesando payload:", err);
       });
