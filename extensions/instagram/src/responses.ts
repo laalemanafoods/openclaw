@@ -74,11 +74,8 @@ export const RESPONSES = {
       );
     },
 
-    confirmation(negocio: string): string {
-      return (
-        `¡Perfecto, ${negocio}! Le paso tus datos al equipo comercial y te van a escribir por WhatsApp a la brevedad 🙌\n\n` +
-        "¿Hay algo más en lo que te pueda ayudar?"
-      );
+    confirmation(_negocio: string): string {
+      return "¡Excelente! Ya envié tus datos al sector de ventas. Se van a estar comunicando con vos por teléfono a la brevedad. 😊";
     },
   },
 
@@ -95,11 +92,8 @@ export const RESPONSES = {
       );
     },
 
-    confirmation(nombre: string): string {
-      return (
-        `¡Perfecto ${nombre}! El equipo de ventas te va a contactar para pasarte un presupuesto especial para tu evento 🙌\n\n` +
-        "¿Necesitás algo más?"
-      );
+    confirmation(_nombre: string): string {
+      return "¡Excelente! Ya envié tus datos al sector de ventas. Se van a estar comunicando con vos por teléfono a la brevedad. 😊";
     },
   },
 

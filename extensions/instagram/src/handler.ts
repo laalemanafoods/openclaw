@@ -135,6 +135,9 @@ async function sendAllForCity(senderId: string, cityName: string): Promise<void>
 // Main message handler
 // ---------------------------------------------------------------------------
 async function handleMessage(senderId: string, text: string): Promise<void> {
+  // Human-like typing delay (10–20 s)
+  await new Promise<void>((resolve) => setTimeout(resolve, 10000 + Math.floor(Math.random() * 10000)));
+
   const session = getSession(senderId);
 
   // Price policy: intercept price questions for consumer/unknown sessions
