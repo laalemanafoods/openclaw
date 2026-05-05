@@ -8,8 +8,8 @@ const REQUIRED_ENV_VARS = [
   "INSTAGRAM_ACCESS_TOKEN",
   "INSTAGRAM_PAGE_ID",
   "INSTAGRAM_VERIFY_TOKEN",
-  "TELEGRAM_BOT_TOKEN",
-  "TELEGRAM_CHAT_ID",
+  "IG_TELEGRAM_BOT_TOKEN",
+  "IG_TELEGRAM_CHAT_ID",
 ] as const;
 
 // Variables de modo test (opcionales, activas por defecto).
