@@ -30,11 +30,11 @@ function buildMessage(params: TelegramParams): string {
 }
 
 export async function sendTelegramNotification(params: TelegramParams): Promise<void> {
-  const token = process.env["TELEGRAM_BOT_TOKEN"];
-  const chatId = process.env["TELEGRAM_CHAT_ID"];
+  const token = process.env["IG_TELEGRAM_BOT_TOKEN"];
+  const chatId = process.env["IG_TELEGRAM_CHAT_ID"];
 
   if (!token || !chatId) {
-    console.warn("[instagram] Telegram no configurado: faltan TELEGRAM_BOT_TOKEN o TELEGRAM_CHAT_ID");
+    console.warn("[instagram] Telegram no configurado: faltan IG_TELEGRAM_BOT_TOKEN o IG_TELEGRAM_CHAT_ID");
     return;
   }
 
