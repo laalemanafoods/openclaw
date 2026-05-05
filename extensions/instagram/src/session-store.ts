@@ -3,7 +3,8 @@
 type ConsumerState =
   | { segment: "consumer" }
   | { segment: "consumer"; step: "asking_city" }
-  | { segment: "consumer"; step: "asking_barrio"; city: string };
+  | { segment: "consumer"; step: "asking_barrio"; city: string }
+  | { segment: "consumer"; step: "asking_city_for_barrio"; barrio: string };
 
 type B2BState =
   | { segment: "b2b"; step: "collecting" }

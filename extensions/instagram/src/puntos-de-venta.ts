@@ -29,14 +29,25 @@ function load(): { tienda_online: string; puntos: PuntoDeVenta[] } {
   }
 }
 
-// Matches only by barrio field (not ciudad).
-export function findByBarrioOnly(query: string): PuntoDeVenta[] {
+// Matches only by barrio field. If cityFilter is provided, restricts to that city only.
+export function findByBarrioOnly(query: string, cityFilter?: string): PuntoDeVenta[] {
   const { puntos } = load();
   const q = norm(query);
-  return puntos.filter((p) => {
+  const matches = puntos.filter((p) => {
     const barrio = norm(p.barrio ?? "");
     return barrio && (q.includes(barrio) || barrio.includes(q));
   });
+  if (cityFilter) {
+    const c = norm(cityFilter);
+    return matches.filter((p) => norm(p.ciudad) === c);
+  }
+  return matches;
+}
+
+// Returns the distinct cities that have stores matching the given barrio query.
+export function getBarrioCities(query: string): string[] {
+  const matches = findByBarrioOnly(query);
+  return [...new Set(matches.map((p) => p.ciudad))];
 }
 
 // Matches only by ciudad field (not barrio).
@@ -71,13 +82,6 @@ export function groupByBarrio(stores: PuntoDeVenta[]): Map<string, PuntoDeVenta[
     groups.get(key)!.push(store);
   }
   return groups;
-}
-
-// Original combined lookup (barrio OR ciudad).
-export function findStoresByLocation(query: string): PuntoDeVenta[] {
-  const byBarrio = findByBarrioOnly(query);
-  if (byBarrio.length > 0) return byBarrio;
-  return findByCityOnly(query);
 }
 
 export function getOnlineStoreUrl(): string {

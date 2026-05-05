@@ -7,6 +7,7 @@ import {
   findByBarrioOnly,
   findByCityOnly,
   getAllForCity,
+  getBarrioCities,
   getOnlineStoreUrl,
   groupByBarrio,
   hasDistinctBarrios,
@@ -173,10 +174,31 @@ async function handleMessage(senderId: string, text: string): Promise<void> {
     return;
   }
 
-  // Consumer: waiting for barrio refinement after showing big city
+  // Consumer: disambiguating barrio city (e.g. "Centro de BA o Córdoba?")
+  if (session.segment === "consumer" && "step" in session && session.step === "asking_city_for_barrio") {
+    const savedBarrio = session.barrio;
+    const byCity = findByCityOnly(text);
+    setSession(senderId, { segment: "consumer" });
+    if (byCity.length > 0) {
+      const cityName = byCity[0]!.ciudad;
+      const filtered = findByBarrioOnly(savedBarrio, cityName);
+      if (filtered.length > 0) {
+        await sendStoresByBarrio(senderId, savedBarrio, filtered);
+      } else {
+        await sendAllForCity(senderId, cityName);
+      }
+    } else {
+      // Can't determine city — show all matches for that barrio
+      const all = findByBarrioOnly(savedBarrio);
+      await sendStoresByBarrio(senderId, savedBarrio, all);
+    }
+    return;
+  }
+
+  // Consumer: waiting for barrio refinement after showing big city — filter by saved city
   if (session.segment === "consumer" && "step" in session && session.step === "asking_barrio") {
     const savedCity = session.city;
-    const byBarrio = findByBarrioOnly(text);
+    const byBarrio = findByBarrioOnly(text, savedCity);
     if (byBarrio.length > 0) {
       setSession(senderId, { segment: "consumer" });
       const barrio = byBarrio[0]?.barrio ?? text;
@@ -191,14 +213,22 @@ async function handleMessage(senderId: string, text: string): Promise<void> {
 
   // Consumer: waiting for city/barrio (initial ask)
   if (session.segment === "consumer" && "step" in session && session.step === "asking_city") {
-    setSession(senderId, { segment: "consumer" });
-
     const byBarrio = findByBarrioOnly(text);
     if (byBarrio.length > 0) {
+      const cities = getBarrioCities(text);
+      if (cities.length > 1) {
+        const barrioName = byBarrio[0]?.barrio ?? text;
+        setSession(senderId, { segment: "consumer", step: "asking_city_for_barrio", barrio: barrioName });
+        await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.askCityForBarrio(barrioName, cities) });
+        return;
+      }
+      setSession(senderId, { segment: "consumer" });
       const barrio = byBarrio[0]?.barrio ?? text;
       await sendStoresByBarrio(senderId, barrio, byBarrio);
       return;
     }
+
+    setSession(senderId, { segment: "consumer" });
 
     const byCity = findByCityOnly(text);
     if (byCity.length > 0) {
@@ -225,6 +255,14 @@ async function handleMessage(senderId: string, text: string): Promise<void> {
       // Check if barrio is in the message
       const byBarrio = findByBarrioOnly(text);
       if (byBarrio.length > 0) {
+        const cities = getBarrioCities(text);
+        if (cities.length > 1) {
+          // Ambiguous barrio — ask which city
+          const barrioName = byBarrio[0]?.barrio ?? text;
+          setSession(senderId, { segment: "consumer", step: "asking_city_for_barrio", barrio: barrioName });
+          await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.askCityForBarrio(barrioName, cities) });
+          break;
+        }
         setSession(senderId, { segment: "consumer" });
         const barrio = byBarrio[0]?.barrio ?? text;
         await sendStoresByBarrio(senderId, barrio, byBarrio);

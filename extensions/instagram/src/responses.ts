@@ -23,6 +23,15 @@ export const RESPONSES = {
       return "¡Hola! Qué gusto saludarte. 😊 Claro, te ayudo con eso. ¿En qué ciudad o barrio estás?";
     },
 
+    askCityForBarrio(barrioName: string, cities: string[]): string {
+      if (cities.length === 2) {
+        return `¿${barrioName} de ${cities[0]} o de ${cities[1]}? 😊`;
+      }
+      const last = cities[cities.length - 1]!;
+      const rest = cities.slice(0, -1).join(", ");
+      return `¿En qué ciudad estás: ${rest} o ${last}? 😊`;
+    },
+
     askBarrio(cityName: string): string {
       return (
         `¡Qué bueno! En ${cityName} tenemos muchísimos puntos de venta 😊\n\n` +
