@@ -149,8 +149,8 @@ async function sendAllForCity(senderId: string, cityName: string): Promise<void>
 // Main message handler
 // ---------------------------------------------------------------------------
 async function handleMessage(senderId: string, text: string): Promise<void> {
-  // Human-like typing delay (10–20 s)
-  await new Promise<void>((resolve) => setTimeout(resolve, 10000 + Math.floor(Math.random() * 10000)));
+  // Human-like typing delay (3–7 s)
+  await new Promise<void>((resolve) => setTimeout(resolve, 3000 + Math.floor(Math.random() * 4000)));
 
   const session = getSession(senderId);
 
@@ -395,11 +395,13 @@ async function processWebhookPayload(rawBody: string): Promise<void> {
       const senderId = event.sender?.id;
       const text = event.message?.text;
       if (!senderId || !text) continue;
-      if (!isAllowedInTestMode(senderId, text)) {
+      const isModoStaff = /^modo staff\s*/i.test(text.trimStart());
+      const processedText = isModoStaff ? text.trimStart().replace(/^modo staff\s*/i, "").trim() || text : text;
+      if (!isModoStaff && !isAllowedInTestMode(senderId, processedText)) {
         console.info(`[instagram] Mensaje de ${senderId} ignorado (filtro test mode)`);
         continue;
       }
-      await handleMessage(senderId, text).catch((err) => {
+      await handleMessage(senderId, processedText).catch((err) => {
         console.error(`[instagram] Error procesando mensaje de ${senderId}:`, err);
       });
     }
