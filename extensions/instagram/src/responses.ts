@@ -97,7 +97,7 @@ export const RESPONSES = {
 
     confirmation(nombre: string): string {
       return (
-        `¡Perfecto ${nombre}! Le paso tu pedido al equipo y te contactan por WhatsApp a la brevedad 🙌\n\n` +
+        `¡Perfecto ${nombre}! El equipo de ventas te va a contactar para pasarte un presupuesto especial para tu evento 🙌\n\n` +
         "¿Necesitás algo más?"
       );
     },
