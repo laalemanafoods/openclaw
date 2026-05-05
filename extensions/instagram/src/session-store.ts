@@ -10,6 +10,10 @@ type B2BState =
   | { segment: "b2b"; step: "collecting" }
   | { segment: "b2b"; step: "done" };
 
+type EventoState =
+  | { segment: "evento"; step: "collecting" }
+  | { segment: "evento"; step: "done" };
+
 type QuejaState =
   | { segment: "queja"; step: "collecting" }
   | { segment: "queja"; step: "done" };
@@ -17,6 +21,7 @@ type QuejaState =
 type SessionState =
   | ConsumerState
   | B2BState
+  | EventoState
   | QuejaState
   | { segment: "vendedor" }
   | { segment: "unknown" };

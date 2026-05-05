@@ -82,6 +82,27 @@ export const RESPONSES = {
     },
   },
 
+  evento: {
+    askForData(): string {
+      return (
+        "¡Qué bueno! Para pedidos de ese volumen podemos coordinar un envío directo desde fábrica 🎉\n\n" +
+        "Necesito estos datos para organizarlo:\n\n" +
+        "• Tu nombre:\n" +
+        "• WhatsApp:\n" +
+        "• Localidad:\n" +
+        "• Cantidad estimada (kg):\n\n" +
+        "El equipo te confirma todo a la brevedad."
+      );
+    },
+
+    confirmation(nombre: string): string {
+      return (
+        `¡Perfecto ${nombre}! Le paso tu pedido al equipo y te contactan por WhatsApp a la brevedad 🙌\n\n` +
+        "¿Necesitás algo más?"
+      );
+    },
+  },
+
   queja: {
     askForData(): string {
       return (

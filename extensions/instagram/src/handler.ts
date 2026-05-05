@@ -160,6 +160,21 @@ async function handleMessage(senderId: string, text: string): Promise<void> {
     return;
   }
 
+  // Evento data collection
+  if (session.segment === "evento" && session.step === "collecting") {
+    const nombre = extractField(text, "nombre") ?? `Cliente IG ${senderId.slice(-6)}`;
+    const whatsapp = extractField(text, "whatsapp") ?? extractField(text, "wp") ?? extractField(text, "wsp") ?? extractPhone(text) ?? "no informado";
+    const localidad = extractField(text, "localidad") ?? extractField(text, "ciudad") ?? extractField(text, "ubicación") ?? extractField(text, "ubicacion") ?? "no informada";
+    const cantidad = extractField(text, "cantidad") ?? extractField(text, "kg") ?? extractField(text, "kilo") ?? "no informada";
+
+    setSession(senderId, { segment: "evento", step: "done" });
+    await Promise.all([
+      sendInstagramReply({ recipientId: senderId, text: RESPONSES.evento.confirmation(nombre) }),
+      sendTelegramNotification({ segment: "evento", nombre, localidad, cantidad, whatsapp, senderId }),
+    ]);
+    return;
+  }
+
   // Queja data collection
   if (session.segment === "queja" && session.step === "collecting") {
     const nombre = extractField(text, "nombre") ?? `Usuario IG ${senderId.slice(-6)}`;
@@ -294,6 +309,11 @@ async function handleMessage(senderId: string, text: string): Promise<void> {
     case "b2b": {
       setSession(senderId, { segment: "b2b", step: "collecting" });
       await sendInstagramReply({ recipientId: senderId, text: RESPONSES.b2b.askForData() });
+      break;
+    }
+    case "evento": {
+      setSession(senderId, { segment: "evento", step: "collecting" });
+      await sendInstagramReply({ recipientId: senderId, text: RESPONSES.evento.askForData() });
       break;
     }
     case "queja": {

@@ -1,6 +1,6 @@
 // Classifies incoming Instagram DM text into one of four segments for La Alemana Foods.
 
-export type Segment = "consumer" | "b2b" | "queja" | "vendedor";
+export type Segment = "consumer" | "b2b" | "evento" | "queja" | "vendedor";
 
 const B2B_KEYWORDS = [
   "fiambrería",
@@ -74,6 +74,15 @@ const QUEJA_KEYWORDS = [
   "esta malo",
 ];
 
+const EVENTO_KEYWORDS = [
+  "cumpleaños", "cumpleanos", "casamiento", "boda", "bodas",
+  "fiesta", "fiestas", "quince", "quinceañera", "quinceañero", "quinceañeras",
+  "agasajo", "reunion familiar", "reunión familiar",
+  "10 kg", "10kg", "20 kg", "20kg", "30 kg", "30kg",
+  "mas de 10 kilo", "más de 10 kilo", "grandes cantidades", "gran cantidad",
+  "muchos kilos", "varios kilos", "bastantes kilos",
+];
+
 const VENDEDOR_KEYWORDS = [
   "vendedor",
   "vendedora",
@@ -99,11 +108,14 @@ export function classifyMessage(text: string): Segment {
   if (VENDEDOR_KEYWORDS.some((kw) => lower.includes(normalize(kw)))) {
     return "vendedor";
   }
-  if (QUEJA_KEYWORDS.some((kw) => lower.includes(normalize(kw)))) {
-    return "queja";
-  }
   if (B2B_KEYWORDS.some((kw) => lower.includes(normalize(kw)))) {
     return "b2b";
+  }
+  if (EVENTO_KEYWORDS.some((kw) => lower.includes(normalize(kw)))) {
+    return "evento";
+  }
+  if (QUEJA_KEYWORDS.some((kw) => lower.includes(normalize(kw)))) {
+    return "queja";
   }
   return "consumer";
 }
