@@ -3,7 +3,8 @@
 export type TelegramParams =
   | { segment: "b2b"; negocio: string; ciudad: string; whatsapp: string; senderId: string }
   | { segment: "evento"; nombre: string; localidad: string; cantidad: string; whatsapp: string; senderId: string }
-  | { segment: "queja"; nombre: string; whatsapp: string; descripcion: string; senderId: string };
+  | { segment: "queja"; nombre: string; whatsapp: string; descripcion: string; senderId: string }
+  | { segment: "confusion"; nombre: string; whatsapp: string; consulta: string; senderId: string };
 
 function buildMessage(params: TelegramParams): string {
   const igLink = `https://www.instagram.com/direct/t/${params.senderId}`;
@@ -18,6 +19,14 @@ function buildMessage(params: TelegramParams): string {
     return (
       `🎉 <b>Nuevo Pedido para Evento (+10kg)</b>\n` +
       `${params.nombre} | 📍 ${params.localidad} | ⚖️ ${params.cantidad} | 📱 WhatsApp: ${params.whatsapp}\n` +
+      `🔗 IG: ${igLink}`
+    );
+  }
+  if (params.segment === "confusion") {
+    return (
+      `🧩 <b>Consulta Técnica/Compleja</b>\n` +
+      `${params.nombre} | 📱 WhatsApp: ${params.whatsapp}\n` +
+      `❓ Consulta: ${params.consulta.slice(0, 300)}\n` +
       `🔗 IG: ${igLink}`
     );
   }

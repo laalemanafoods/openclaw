@@ -13,7 +13,7 @@ import {
   hasDistinctBarrios,
 } from "./puntos-de-venta.js";
 import { RESPONSES } from "./responses.js";
-import { getSession, setSession } from "./session-store.js";
+import { getSession, setSession, incrementConfusion, resetConfusion } from "./session-store.js";
 import { sendTelegramNotification } from "./telegram.js";
 
 // ---------------------------------------------------------------------------
@@ -104,17 +104,31 @@ function askingAboutPrice(text: string): boolean {
 // Consumer location flow helpers
 // ---------------------------------------------------------------------------
 async function sendStoresByBarrio(senderId: string, locationName: string, stores: ReturnType<typeof findByBarrioOnly>): Promise<void> {
+  resetConfusion(senderId);
   await sendInstagramReply({
     recipientId: senderId,
     text: RESPONSES.consumer.storeFound(locationName, stores),
   });
 }
 
+async function triggerConfusionIfNeeded(senderId: string): Promise<boolean> {
+  const count = incrementConfusion(senderId);
+  if (count >= 2) {
+    setSession(senderId, { segment: "confusion", step: "asking" });
+    await sendInstagramReply({ recipientId: senderId, text: RESPONSES.confusion.escapeValve() });
+    return true;
+  }
+  return false;
+}
+
 async function sendAllForCity(senderId: string, cityName: string): Promise<void> {
   const all = getAllForCity(cityName);
   if (all.length === 0) {
-    const tiendaOnline = getOnlineStoreUrl();
-    await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.noStore(tiendaOnline) });
+    const triggered = await triggerConfusionIfNeeded(senderId);
+    if (!triggered) {
+      const tiendaOnline = getOnlineStoreUrl();
+      await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.noStore(tiendaOnline) });
+    }
     return;
   }
   if (hasDistinctBarrios(all)) {
@@ -192,6 +206,37 @@ async function handleMessage(senderId: string, text: string): Promise<void> {
     return;
   }
 
+  // Confusion: waiting for yes/no on escape valve
+  if (session.segment === "confusion" && session.step === "asking") {
+    const q = normalize(text);
+    const yes = ["si", "sí", "dale", "claro", "ok", "bueno", "porfa", "quiero", "genial"].some((w) => q.includes(w));
+    const no = ["no", "gracias no", "no gracias", "dejá", "deja"].some((w) => q === w || q.startsWith(w + " "));
+    if (no) {
+      setSession(senderId, { segment: "unknown" });
+      resetConfusion(senderId);
+      await sendInstagramReply({ recipientId: senderId, text: RESPONSES.confusion.decline() });
+    } else if (yes || (!no)) {
+      setSession(senderId, { segment: "confusion", step: "collecting" });
+      await sendInstagramReply({ recipientId: senderId, text: RESPONSES.confusion.askForData() });
+    }
+    return;
+  }
+
+  // Confusion: collecting lead data
+  if (session.segment === "confusion" && session.step === "collecting") {
+    const nombre = extractField(text, "nombre") ?? `Usuario IG ${senderId.slice(-6)}`;
+    const whatsapp = extractField(text, "whatsapp") ?? extractField(text, "wp") ?? extractField(text, "wsp") ?? extractPhone(text) ?? "no informado";
+    const consulta = text.slice(0, 300);
+
+    setSession(senderId, { segment: "confusion", step: "done" });
+    resetConfusion(senderId);
+    await Promise.all([
+      sendInstagramReply({ recipientId: senderId, text: RESPONSES.confusion.confirmation() }),
+      sendTelegramNotification({ segment: "confusion", nombre, whatsapp, consulta, senderId }),
+    ]);
+    return;
+  }
+
   // Consumer: disambiguating barrio city (e.g. "Centro de BA o Córdoba?")
   if (session.segment === "consumer" && "step" in session && session.step === "asking_city_for_barrio") {
     const savedBarrio = session.barrio;
@@ -260,8 +305,11 @@ async function handleMessage(senderId: string, text: string): Promise<void> {
       return;
     }
 
-    const tiendaOnline = getOnlineStoreUrl();
-    await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.noStore(tiendaOnline) });
+    const triggered = await triggerConfusionIfNeeded(senderId);
+    if (!triggered) {
+      const tiendaOnline = getOnlineStoreUrl();
+      await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.noStore(tiendaOnline) });
+    }
     return;
   }
 

@@ -126,6 +126,29 @@ export const RESPONSES = {
     },
   },
 
+  confusion: {
+    escapeValve(): string {
+      return "Veo que tenés dudas muy específicas y no quiero darte información errónea. 😊 ¿Te gustaría que un asesor del sector de ventas se comunique con vos para asesorarte personalmente?";
+    },
+
+    askForData(): string {
+      return (
+        "¡Perfecto! Para que te contacten, necesito:\n\n" +
+        "• Tu nombre:\n" +
+        "• WhatsApp:\n" +
+        "• Tema de tu consulta:"
+      );
+    },
+
+    confirmation(): string {
+      return "¡Excelente! Ya envié tus datos al sector de ventas. Se van a estar comunicando con vos por teléfono a la brevedad. 😊";
+    },
+
+    decline(): string {
+      return "Entendido, quedás a disposición cuando necesites. 😊 ¿Hay algo más en lo que te pueda ayudar?";
+    },
+  },
+
   fallback(): string {
     return (
       "¡Hola! Soy La Alemanita Digital, la asistente de La Alemana Foods 😊\n\n" +

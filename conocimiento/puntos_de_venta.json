@@ -65,6 +65,24 @@
       "instagram": "@singlutenolivosbaires"
     },
     {
+      "nombre": "Salumeria Montevideo",
+      "ciudad": "Rosario",
+      "direccion": "Montevideo 1364",
+      "instagram": "@salumeria.hnos"
+    },
+    {
+      "nombre": "JULIÁ",
+      "ciudad": "Funes",
+      "direccion": "Juan Bautista Alberdi 2700",
+      "instagram": "@fiambreriajulia"
+    },
+    {
+      "nombre": "Mercado de Sabores",
+      "ciudad": "Neuquén",
+      "barrio": "Alto Comahue",
+      "instagram": "@mercadodesaloresnqn"
+    },
+    {
       "nombre": "Cerutti",
       "ciudad": "Río Cuarto",
       "direccion": "Moreno 1503",
@@ -79,6 +97,7 @@
     {
       "nombre": "Al Dente",
       "ciudad": "Río Cuarto",
+      "barrio": "Banda Norte",
       "direccion": "Fray Quirico Porreca 547",
       "instagram": "@aldenteriocuarto"
     },
@@ -130,6 +149,13 @@
       "instagram": "@almacendemario"
     },
     {
+      "nombre": "Casa Savia",
+      "ciudad": "Córdoba",
+      "barrio": "Centro",
+      "direccion": "Balcarce 420",
+      "instagram": "@casasavia.cba"
+    },
+    {
       "nombre": "La Q Sería",
       "ciudad": "Córdoba",
       "barrio": "General Paz",
@@ -156,13 +182,6 @@
       "barrio": "Cerro",
       "direccion": "Av. Rafael Núñez 4580",
       "instagram": "@jabugo_almacen_gourmet"
-    },
-    {
-      "nombre": "Casa Savia",
-      "ciudad": "Córdoba",
-      "barrio": "Cerro",
-      "direccion": "Balcarce 420",
-      "instagram": "@casasavia.cba"
     },
     {
       "nombre": "Almacén de Mario",

@@ -14,6 +14,11 @@ type EventoState =
   | { segment: "evento"; step: "collecting" }
   | { segment: "evento"; step: "done" };
 
+type ConfusionState =
+  | { segment: "confusion"; step: "asking" }
+  | { segment: "confusion"; step: "collecting" }
+  | { segment: "confusion"; step: "done" };
+
 type QuejaState =
   | { segment: "queja"; step: "collecting" }
   | { segment: "queja"; step: "done" };
@@ -23,10 +28,12 @@ type SessionState =
   | B2BState
   | EventoState
   | QuejaState
+  | ConfusionState
   | { segment: "vendedor" }
   | { segment: "unknown" };
 
 const sessions = new Map<string, SessionState>();
+const confusionCounts = new Map<string, number>();
 
 export function getSession(senderId: string): SessionState {
   return sessions.get(senderId) ?? { segment: "unknown" };
@@ -34,4 +41,14 @@ export function getSession(senderId: string): SessionState {
 
 export function setSession(senderId: string, state: SessionState): void {
   sessions.set(senderId, state);
+}
+
+export function incrementConfusion(senderId: string): number {
+  const count = (confusionCounts.get(senderId) ?? 0) + 1;
+  confusionCounts.set(senderId, count);
+  return count;
+}
+
+export function resetConfusion(senderId: string): void {
+  confusionCounts.delete(senderId);
 }
