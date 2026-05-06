@@ -13,7 +13,7 @@ import {
   hasDistinctBarrios,
 } from "./puntos-de-venta.js";
 import { RESPONSES } from "./responses.js";
-import { getSession, setSession, incrementConfusion, resetConfusion } from "./session-store.js";
+import { getSession, setSession, incrementConfusion, resetConfusion, markAsStaff, isStaff } from "./session-store.js";
 import { sendTelegramNotification } from "./telegram.js";
 
 // ---------------------------------------------------------------------------
@@ -88,6 +88,82 @@ function askingWhereToBuy(text: string): boolean {
   return PURCHASE_KEYWORDS.some((kw) => q.includes(normalize(kw)));
 }
 
+const GREETING_WORDS = new Set([
+  "hola", "buenas", "buen", "buenos", "dias", "dia",
+  "tardes", "noches", "mananas", "hi", "hey", "saludos", "ola",
+]);
+
+function isJustGreeting(text: string): boolean {
+  const words = normalize(text)
+    .replace(/[!?¡¿.,]+/g, " ")
+    .replace(/(.)\1{2,}/g, "$1")  // collapse holaaaa → hola
+    .split(/\s+/)
+    .filter(Boolean);
+  return words.length > 0 && words.every((w) => GREETING_WORDS.has(w));
+}
+
+const AI_KEYWORDS = [
+  "chatgpt", "openai", "anthropic", "claude", "gemini", "gpt-4", "gpt4", "gpt 4",
+  "qué ia", "que ia", "sos ia", "sos una ia", "eres una ia",
+  "sos un robot", "eres un robot", "sos un bot", "eres un bot",
+  "modelo de ia", "inteligencia artificial", "machine learning",
+  "qué modelo", "que modelo", "qué tecnología", "que tecnologia",
+  "quien te programo", "quién te programó", "como funcionas", "cómo funcionás",
+  "qué sos vos", "que sos vos",
+];
+
+function askingAboutAI(text: string): boolean {
+  const q = normalize(text);
+  return AI_KEYWORDS.some((kw) => q.includes(normalize(kw)));
+}
+
+const AMBIGUOUS_WORDS = new Set([
+  "ok", "dale", "aja", "aha", "ya", "listo", "entendido",
+  "jaja", "jeje", "jajaja", "jejeje", "kk", "jj",
+]);
+
+function isAmbiguous(text: string): boolean {
+  const q = normalize(text).replace(/[!?¡¿.,\s]+/g, " ").trim();
+  if (q.length <= 2) return true;
+  const words = q.split(/\s+/).filter(Boolean);
+  return words.length === 1 && AMBIGUOUS_WORDS.has(words[0]!);
+}
+
+function mentionsBarrioKeyword(text: string): boolean {
+  return normalize(text).split(/\s+/).includes("barrio");
+}
+
+const PRODUCT_KEYWORDS = [
+  "salchicha", "salchichas", "salame", "salami", "salamín", "salamines",
+  "bondiola", "jamon", "jamón", "fiambre", "fiambres", "mortadela",
+  "chorizo", "longaniza", "panceta", "prosciutto", "frankfurt",
+  "leberwurst", "pastrón", "pastron",
+];
+
+function mentionsProduct(text: string): boolean {
+  const q = normalize(text);
+  return PRODUCT_KEYWORDS.some((kw) => q.includes(normalize(kw)));
+}
+
+// Ciudades y provincias argentinas sin puntos de venta en la DB
+const KNOWN_ARGENTINE_LOCATIONS: string[] = [
+  "San Juan", "Salta", "Mendoza", "Tucumán", "Jujuy",
+  "Corrientes", "Chaco", "Formosa", "Misiones", "Entre Ríos",
+  "La Rioja", "Catamarca", "Santiago del Estero", "La Pampa",
+  "Río Negro", "Chubut", "Santa Cruz", "Tierra del Fuego",
+  "San Luis", "San Rafael", "Bariloche", "Resistencia", "Posadas",
+  "Paraná", "Mar del Plata", "Bahía Blanca", "La Plata",
+  "Tandil", "Lomas de Zamora", "Quilmes", "Lanús", "Avellaneda",
+];
+
+function findKnownArgentineLocation(text: string): string | null {
+  const q = normalize(text);
+  for (const loc of KNOWN_ARGENTINE_LOCATIONS) {
+    if (q.includes(normalize(loc))) return loc;
+  }
+  return null;
+}
+
 const PRICE_KEYWORDS = [
   "precio", "precios", "cuánto cuesta", "cuanto cuesta", "cuánto sale", "cuanto sale",
   "cuánto vale", "cuanto vale", "cuánto están", "cuanto estan", "qué precio",
@@ -154,11 +230,21 @@ async function handleMessage(senderId: string, text: string): Promise<void> {
 
   const session = getSession(senderId);
 
-  // Price policy: intercept price questions for consumer/unknown sessions
-  if (
-    (session.segment === "unknown" || session.segment === "consumer") &&
-    askingAboutPrice(text)
-  ) {
+  // Identity guard: deflect questions about AI/technology regardless of session
+  if (askingAboutAI(text)) {
+    await sendInstagramReply({ recipientId: senderId, text: RESPONSES.identityGuard() });
+    return;
+  }
+
+  // Universal first-message guard: ALWAYS greet before entering any flow
+  if (session.segment === "unknown") {
+    setSession(senderId, { segment: "consumer" });
+    await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.neutralGreeting() });
+    return;
+  }
+
+  // Price policy: intercept price questions for consumer sessions
+  if (session.segment === "consumer" && askingAboutPrice(text)) {
     await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.pricePolicy() });
     return;
   }
@@ -174,6 +260,20 @@ async function handleMessage(senderId: string, text: string): Promise<void> {
       sendInstagramReply({ recipientId: senderId, text: RESPONSES.b2b.confirmation(negocio) }),
       sendTelegramNotification({ segment: "b2b", negocio, ciudad, whatsapp, senderId }),
     ]);
+    return;
+  }
+
+  // Evento: esperando confirmación de interés
+  if (session.segment === "evento" && session.step === "confirming") {
+    const q = normalize(text);
+    const yes = ["si", "sí", "dale", "claro", "ok", "bueno", "porfa", "quiero", "me interesa", "genial"].some((w) => q.includes(w));
+    if (yes) {
+      setSession(senderId, { segment: "evento", step: "collecting" });
+      await sendInstagramReply({ recipientId: senderId, text: RESPONSES.evento.askForData() });
+    } else {
+      setSession(senderId, { segment: "unknown" });
+      await sendInstagramReply({ recipientId: senderId, text: RESPONSES.confusion.decline() });
+    }
     return;
   }
 
@@ -291,8 +391,6 @@ async function handleMessage(senderId: string, text: string): Promise<void> {
       return;
     }
 
-    setSession(senderId, { segment: "consumer" });
-
     const byCity = findByCityOnly(text);
     if (byCity.length > 0) {
       const cityName = byCity[0]!.ciudad;
@@ -300,15 +398,25 @@ async function handleMessage(senderId: string, text: string): Promise<void> {
         setSession(senderId, { segment: "consumer", step: "asking_barrio", city: cityName });
         await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.askBarrio(cityName) });
       } else {
+        setSession(senderId, { segment: "consumer" });
         await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.storeFound(cityName, byCity) });
       }
       return;
     }
 
+    // Verificar si es una provincia/ciudad argentina conocida sin locales
+    const knownLocation = findKnownArgentineLocation(text);
+    if (knownLocation) {
+      setSession(senderId, { segment: "evento", step: "confirming" });
+      await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.noStoreInProvince(knownLocation) });
+      return;
+    }
+
+    // Location not recognized — re-ask without diagnosing "no stores in your area" (no zone given yet)
     const triggered = await triggerConfusionIfNeeded(senderId);
     if (!triggered) {
-      const tiendaOnline = getOnlineStoreUrl();
-      await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.noStore(tiendaOnline) });
+      // Keep session at asking_city so the next reply is still treated as a location attempt
+      await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.askCityNotFound() });
     }
     return;
   }
@@ -347,13 +455,31 @@ async function handleMessage(senderId: string, text: string): Promise<void> {
         }
         break;
       }
-      // No location in message — ask for it
-      if (askingWhereToBuy(text)) {
-        setSession(senderId, { segment: "consumer", step: "asking_city" });
-        await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.askCityDirect() });
+      // No location in message — determine correct response (session is always consumer here, never unknown)
+      if (isAmbiguous(text)) {
+        // Mensaje sin sentido claro — pedir clarificación sin asumir intención de compra
+        await sendInstagramReply({ recipientId: senderId, text: RESPONSES.clarification() });
       } else {
-        setSession(senderId, { segment: "consumer", step: "asking_city" });
-        await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.askCity() });
+        const knownLocation = findKnownArgentineLocation(text);
+        if (knownLocation) {
+          // Provincia/ciudad sin locales — ofrecer envío desde fábrica sin pedir barrio
+          setSession(senderId, { segment: "evento", step: "confirming" });
+          await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.noStoreInProvince(knownLocation) });
+        } else if (mentionsProduct(text)) {
+          // Mencionó un producto específico (ya saludamos)
+          setSession(senderId, { segment: "consumer", step: "asking_city" });
+          await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.askCityForProduct() });
+        } else if (askingWhereToBuy(text) || mentionsBarrioKeyword(text)) {
+          // Preguntó dónde comprar o mencionó barrio (ya saludamos) — pedir ciudad
+          setSession(senderId, { segment: "consumer", step: "asking_city" });
+          const responseText = mentionsBarrioKeyword(text)
+            ? RESPONSES.consumer.askCityForUnknownBarrio()
+            : RESPONSES.consumer.askCityAfterGreeting();
+          await sendInstagramReply({ recipientId: senderId, text: responseText });
+        } else {
+          // Consulta sin intención de compra explícita — NO pedir ubicación todavía
+          await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.askHowToHelp() });
+        }
       }
       break;
     }
@@ -363,8 +489,8 @@ async function handleMessage(senderId: string, text: string): Promise<void> {
       break;
     }
     case "evento": {
-      setSession(senderId, { segment: "evento", step: "collecting" });
-      await sendInstagramReply({ recipientId: senderId, text: RESPONSES.evento.askForData() });
+      setSession(senderId, { segment: "evento", step: "confirming" });
+      await sendInstagramReply({ recipientId: senderId, text: RESPONSES.evento.confirmInterest() });
       break;
     }
     case "queja": {
@@ -395,9 +521,18 @@ async function processWebhookPayload(rawBody: string): Promise<void> {
       const senderId = event.sender?.id;
       const text = event.message?.text;
       if (!senderId || !text) continue;
-      const isModoStaff = /^modo staff\s*/i.test(text.trimStart());
-      const processedText = isModoStaff ? text.trimStart().replace(/^modo staff\s*/i, "").trim() || text : text;
-      if (!isModoStaff && !isAllowedInTestMode(senderId, processedText)) {
+
+      const isModoStaffMessage = /^modo staff\s*/i.test(text.trimStart());
+      if (isModoStaffMessage) {
+        markAsStaff(senderId);
+        console.info(`[instagram] Modo Staff activado para ${senderId}`);
+      }
+
+      const processedText = isModoStaffMessage
+        ? text.trimStart().replace(/^modo staff\s*/i, "").trim() || text
+        : text;
+
+      if (!isStaff(senderId) && !isAllowedInTestMode(senderId, processedText)) {
         console.info(`[instagram] Mensaje de ${senderId} ignorado (filtro test mode)`);
         continue;
       }

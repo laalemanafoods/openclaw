@@ -11,6 +11,7 @@ type B2BState =
   | { segment: "b2b"; step: "done" };
 
 type EventoState =
+  | { segment: "evento"; step: "confirming" }
   | { segment: "evento"; step: "collecting" }
   | { segment: "evento"; step: "done" };
 
@@ -34,6 +35,7 @@ type SessionState =
 
 const sessions = new Map<string, SessionState>();
 const confusionCounts = new Map<string, number>();
+const staffSenders = new Set<string>();
 
 export function getSession(senderId: string): SessionState {
   return sessions.get(senderId) ?? { segment: "unknown" };
@@ -51,4 +53,12 @@ export function incrementConfusion(senderId: string): number {
 
 export function resetConfusion(senderId: string): void {
   confusionCounts.delete(senderId);
+}
+
+export function markAsStaff(senderId: string): void {
+  staffSenders.add(senderId);
+}
+
+export function isStaff(senderId: string): boolean {
+  return staffSenders.has(senderId);
 }

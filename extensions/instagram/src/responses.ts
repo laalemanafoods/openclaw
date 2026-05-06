@@ -12,15 +12,40 @@ export const RESPONSES = {
       return "Los precios varían según cada punto de venta minorista, pero te ayudo a encontrar el local más cercano para que consultes ahí directamente. 😊 ¿En qué ciudad o barrio estás?";
     },
 
+    neutralGreeting(): string {
+      return "¡Hola! Qué gusto saludarte. Soy La Alemanita Digital, la asistente oficial de La Alemana Foods 😊 ¿En qué puedo ayudarte hoy?";
+    },
+
     askCity(): string {
-      return (
-        "¡Hola! Qué gusto saludarte. Soy La Alemanita Digital, la asistente oficial de La Alemana Foods 😊\n\n" +
-        "¿En qué ciudad o barrio estás? Así te cuento el punto de venta más cercano."
-      );
+      return "¡Claro! Decime en qué ciudad o barrio estás así te busco el local más cercano.";
     },
 
     askCityDirect(): string {
-      return "¡Hola! Qué gusto saludarte. 😊 Claro, te ayudo con eso. ¿En qué ciudad o barrio estás?";
+      return "¡Claro! Decime en qué ciudad o barrio estás así te busco el local más cercano.";
+    },
+
+    askCityAfterGreeting(): string {
+      return "¡Claro! Decime en qué ciudad o barrio estás así te busco el local más cercano.";
+    },
+
+    askCityForProduct(): string {
+      return "¡Excelente elección! 🌭 Para decirte cuál es el lugar más cercano, ¿en qué ciudad o barrio estás?";
+    },
+
+    askHowToHelp(): string {
+      return "¡Con mucho gusto! 😊 ¿Querés saber dónde conseguir nuestros productos o tenés alguna otra consulta?";
+    },
+
+    noStoreInProvince(province: string): string {
+      return `¡Qué bueno es ${province}! 🙌 Por ahora no tenemos puntos de venta físicos allá, pero para compras grandes (+10 kg) enviamos desde fábrica. ¿Te interesa?`;
+    },
+
+    askCityNotFound(): string {
+      return "No encontré esa ubicación. ¿En qué ciudad o barrio estás? 😊";
+    },
+
+    askCityForUnknownBarrio(): string {
+      return "No encontré ese barrio en nuestra base. ¿En qué ciudad estás? Así te busco el local más cercano. 😊";
     },
 
     askCityForBarrio(barrioName: string, cities: string[]): string {
@@ -80,10 +105,13 @@ export const RESPONSES = {
   },
 
   evento: {
+    confirmInterest(): string {
+      return "¡Claro! Para compras grandes (+10 kg) podemos enviarte desde fábrica. ¿Te interesa?";
+    },
+
     askForData(): string {
       return (
-        "¡Qué bueno! Para pedidos de ese volumen podemos coordinar un envío directo desde fábrica 🎉\n\n" +
-        "Necesito estos datos para organizarlo:\n\n" +
+        "¡Perfecto! Necesito estos datos para organizarlo:\n\n" +
         "• Tu nombre:\n" +
         "• WhatsApp:\n" +
         "• Localidad:\n" +
@@ -145,14 +173,19 @@ export const RESPONSES = {
     },
 
     decline(): string {
-      return "Entendido, quedás a disposición cuando necesites. 😊 ¿Hay algo más en lo que te pueda ayudar?";
+      return "¡Perfecto! Estoy acá si necesitás algo más. 😊";
     },
   },
 
+  identityGuard(): string {
+    return "Soy la asistente de La Alemana Foods 😊 No puedo compartir detalles técnicos, pero sí ayudarte con nuestros productos.";
+  },
+
+  clarification(): string {
+    return "Perdón, no terminé de entender tu consulta. 🤭 ¿Podrías explicármelo de otra forma así te ayudo mejor?";
+  },
+
   fallback(): string {
-    return (
-      "¡Hola! Soy La Alemanita Digital, la asistente de La Alemana Foods 😊\n\n" +
-      "¿En qué te puedo ayudar hoy?"
-    );
+    return "¡Hola! Soy La Alemanita Digital 🌭 ¿En qué puedo ayudarte hoy?";
   },
 };
