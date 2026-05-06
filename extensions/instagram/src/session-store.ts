@@ -8,7 +8,7 @@ type ConsumerState =
   | { segment: "consumer"; step: "disambiguating_b2b" };
 
 type B2BState =
-  | { segment: "b2b"; step: "collecting" }
+  | { segment: "b2b"; step: "collecting"; city?: string }
   | { segment: "b2b"; step: "done" };
 
 type EventoState =

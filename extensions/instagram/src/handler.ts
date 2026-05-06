@@ -282,7 +282,7 @@ async function handleMessage(senderId: string, text: string): Promise<void> {
   if (session.segment === "b2b" && session.step === "collecting") {
     const contacto = extractField(text, "nombre") ?? extractField(text, "nombre de contacto") ?? extractField(text, "contacto") ?? `Contacto IG ${senderId.slice(-6)}`;
     const negocio = extractField(text, "negocio") ?? extractField(text, "nombre de tu negocio") ?? extractField(text, "local") ?? extractField(text, "empresa") ?? `Negocio ${senderId.slice(-6)}`;
-    const ciudad = extractField(text, "ciudad") ?? extractField(text, "ubicación") ?? extractField(text, "ubicacion") ?? extractField(text, "barrio") ?? "no informada";
+    const ciudad = extractField(text, "ciudad") ?? extractField(text, "ubicación") ?? extractField(text, "ubicacion") ?? extractField(text, "barrio") ?? session.city ?? "no informada";
     const whatsapp = extractField(text, "whatsapp") ?? extractField(text, "wp") ?? extractField(text, "wsp") ?? extractPhone(text) ?? "no informado";
 
     setSession(senderId, { segment: "b2b", step: "done" });
@@ -536,8 +536,9 @@ async function handleMessage(senderId: string, text: string): Promise<void> {
       break;
     }
     case "b2b": {
-      setSession(senderId, { segment: "b2b", step: "collecting" });
-      await sendInstagramReply({ recipientId: senderId, text: RESPONSES.b2b.askForData() });
+      const cityFromMessage = findByCityOnly(text)[0]?.ciudad ?? findKnownArgentineLocation(text) ?? undefined;
+      setSession(senderId, { segment: "b2b", step: "collecting", city: cityFromMessage });
+      await sendInstagramReply({ recipientId: senderId, text: RESPONSES.b2b.askForData(cityFromMessage) });
       break;
     }
     case "evento": {

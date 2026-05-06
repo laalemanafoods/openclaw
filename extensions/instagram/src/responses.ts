@@ -100,14 +100,17 @@ export const RESPONSES = {
   },
 
   b2b: {
-    askForData(): string {
+    askForData(city?: string): string {
+      const greeting = city
+        ? `¡Qué bueno que te interese trabajar con nosotros en ${city}! 🙌 Para que el equipo comercial te contacte con la info mayorista, por favor pasame:\n\n`
+        : `¡Qué bueno que te interese trabajar con nosotros! 🙌 Para que el equipo comercial te contacte con la info mayorista, por favor pasame:\n\n`;
       return (
-        "¡Qué bueno que te interese trabajar con nosotros! 🙌 Para que el equipo comercial te contacte con la info mayorista, por favor pasame:\n\n" +
+        greeting +
         "• Nombre:\n" +
         "• WhatsApp:\n" +
         "• Nombre de tu negocio:\n" +
-        "• Ciudad:\n\n" +
-        "¿Me los pasás?"
+        (city ? "" : "• Ciudad:\n") +
+        "\n¿Me los pasás?"
       );
     },
 

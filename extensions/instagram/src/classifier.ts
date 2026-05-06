@@ -127,10 +127,7 @@ const EVENTO_KEYWORDS = [
 const VENDEDOR_KEYWORDS = [
   "vendedor",
   "vendedora",
-  "quiero vender",
   "representante",
-  "distribuir",
-  "ser distribuidor",
   "agente de ventas",
   "ser representante",
   "comisión de venta",
@@ -149,11 +146,12 @@ export function classifyMessage(text: string): Segment {
   if (SERVICIOS_EXTERNOS_KEYWORDS.some((kw) => lower.includes(normalize(kw)))) {
     return "servicios_externos";
   }
-  if (VENDEDOR_KEYWORDS.some((kw) => lower.includes(normalize(kw)))) {
-    return "vendedor";
-  }
+  // B2B must be checked before VENDEDOR: "quiero vender sus productos" is B2B, not a sales rep request
   if (B2B_KEYWORDS.some((kw) => lower.includes(normalize(kw)))) {
     return "b2b";
+  }
+  if (VENDEDOR_KEYWORDS.some((kw) => lower.includes(normalize(kw)))) {
+    return "vendedor";
   }
   if (EVENTO_KEYWORDS.some((kw) => lower.includes(normalize(kw)))) {
     return "evento";
