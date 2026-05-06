@@ -251,6 +251,7 @@ async function handleMessage(senderId: string, text: string): Promise<void> {
 
   // B2B data collection
   if (session.segment === "b2b" && session.step === "collecting") {
+    const contacto = extractField(text, "nombre de contacto") ?? extractField(text, "contacto") ?? extractField(text, "nombre") ?? `Contacto IG ${senderId.slice(-6)}`;
     const negocio = extractField(text, "negocio") ?? extractField(text, "local") ?? extractField(text, "empresa") ?? `Negocio ${senderId.slice(-6)}`;
     const ciudad = extractField(text, "ciudad") ?? extractField(text, "ubicación") ?? extractField(text, "ubicacion") ?? extractField(text, "barrio") ?? "no informada";
     const whatsapp = extractField(text, "whatsapp") ?? extractField(text, "wp") ?? extractField(text, "wsp") ?? extractPhone(text) ?? "no informado";
@@ -258,7 +259,7 @@ async function handleMessage(senderId: string, text: string): Promise<void> {
     setSession(senderId, { segment: "b2b", step: "done" });
     await Promise.all([
       sendInstagramReply({ recipientId: senderId, text: RESPONSES.b2b.confirmation(negocio) }),
-      sendTelegramNotification({ segment: "b2b", negocio, ciudad, whatsapp, senderId }),
+      sendTelegramNotification({ segment: "b2b", contacto, negocio, ciudad, whatsapp, senderId }),
     ]);
     return;
   }

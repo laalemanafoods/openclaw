@@ -92,6 +92,7 @@ export const RESPONSES = {
       return (
         "¡Qué bueno que quieras sumarte con tu local! Tenemos condiciones especiales para revendedores 🥩\n\n" +
         "Para contactarte necesito:\n\n" +
+        "• Nombre de contacto:\n" +
         "• Nombre del negocio:\n" +
         "• Ciudad:\n" +
         "• WhatsApp:\n\n" +
@@ -100,7 +101,7 @@ export const RESPONSES = {
     },
 
     confirmation(_negocio: string): string {
-      return "¡Excelente! Ya envié tus datos al sector de ventas. Se van a estar comunicando con vos por teléfono a la brevedad. 😊";
+      return "¡Excelente! Ya envié tus datos al sector de ventas. Se van a estar comunicando con vos por teléfono a la brevedad. 😊\n\n¿Hay algo más en lo que te pueda ayudar?";
     },
   },
 
