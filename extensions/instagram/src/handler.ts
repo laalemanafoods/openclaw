@@ -176,6 +176,29 @@ function askingAboutPrice(text: string): boolean {
   return PRICE_KEYWORDS.some((kw) => q.includes(normalize(kw)));
 }
 
+const INGREDIENT_KEYWORDS = [
+  "sin gluten", "sin tacc", "tacc", "gluten", "celiaco", "celíaco", "celiacos", "celíacos",
+  "sin fecula", "sin fécula", "feculas", "féculas", "fecula", "fécula",
+  "ingredientes", "composicion", "composición", "que tiene", "qué tiene",
+  "de que esta", "de qué está", "alérgenos", "alergenos", "conservantes",
+  "100% carne", "100 por ciento carne",
+];
+
+function askingAboutIngredients(text: string): boolean {
+  const q = normalize(text);
+  return INGREDIENT_KEYWORDS.some((kw) => q.includes(normalize(kw)));
+}
+
+const AMBIGUOUS_B2B_PHRASES = [
+  "sus productos en", "los productos en", "tus productos en",
+  "productos en mi", "productos para mi",
+];
+
+function isAmbiguousB2BOrConsumer(text: string): boolean {
+  const q = normalize(text);
+  return AMBIGUOUS_B2B_PHRASES.some((p) => q.includes(normalize(p)));
+}
+
 // ---------------------------------------------------------------------------
 // Consumer location flow helpers
 // ---------------------------------------------------------------------------
@@ -243,6 +266,12 @@ async function handleMessage(senderId: string, text: string): Promise<void> {
     return;
   }
 
+  // Ingredient/technical product questions — answer regardless of session
+  if (askingAboutIngredients(text)) {
+    await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.productInfo() });
+    return;
+  }
+
   // Price policy: intercept price questions for consumer sessions
   if (session.segment === "consumer" && askingAboutPrice(text)) {
     await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.pricePolicy() });
@@ -251,8 +280,8 @@ async function handleMessage(senderId: string, text: string): Promise<void> {
 
   // B2B data collection
   if (session.segment === "b2b" && session.step === "collecting") {
-    const contacto = extractField(text, "nombre de contacto") ?? extractField(text, "contacto") ?? extractField(text, "nombre") ?? `Contacto IG ${senderId.slice(-6)}`;
-    const negocio = extractField(text, "negocio") ?? extractField(text, "local") ?? extractField(text, "empresa") ?? `Negocio ${senderId.slice(-6)}`;
+    const contacto = extractField(text, "nombre") ?? extractField(text, "nombre de contacto") ?? extractField(text, "contacto") ?? `Contacto IG ${senderId.slice(-6)}`;
+    const negocio = extractField(text, "negocio") ?? extractField(text, "nombre de tu negocio") ?? extractField(text, "local") ?? extractField(text, "empresa") ?? `Negocio ${senderId.slice(-6)}`;
     const ciudad = extractField(text, "ciudad") ?? extractField(text, "ubicación") ?? extractField(text, "ubicacion") ?? extractField(text, "barrio") ?? "no informada";
     const whatsapp = extractField(text, "whatsapp") ?? extractField(text, "wp") ?? extractField(text, "wsp") ?? extractPhone(text) ?? "no informado";
 
@@ -335,6 +364,20 @@ async function handleMessage(senderId: string, text: string): Promise<void> {
       sendInstagramReply({ recipientId: senderId, text: RESPONSES.confusion.confirmation() }),
       sendTelegramNotification({ segment: "confusion", nombre, whatsapp, consulta, senderId }),
     ]);
+    return;
+  }
+
+  // Consumer: disambiguating B2B vs consumer intent
+  if (session.segment === "consumer" && "step" in session && session.step === "disambiguating_b2b") {
+    const q = normalize(text);
+    const wantsSell = ["vender", "revender", "distribuir", "negocio", "local", "venta", "si", "sí", "dale", "claro"].some((w) => q.includes(w));
+    if (wantsSell) {
+      setSession(senderId, { segment: "b2b", step: "collecting" });
+      await sendInstagramReply({ recipientId: senderId, text: RESPONSES.b2b.askForData() });
+    } else {
+      setSession(senderId, { segment: "consumer", step: "asking_city" });
+      await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.askCityAfterGreeting() });
+    }
     return;
   }
 
@@ -477,6 +520,10 @@ async function handleMessage(senderId: string, text: string): Promise<void> {
             ? RESPONSES.consumer.askCityForUnknownBarrio()
             : RESPONSES.consumer.askCityAfterGreeting();
           await sendInstagramReply({ recipientId: senderId, text: responseText });
+        } else if (isAmbiguousB2BOrConsumer(text)) {
+          // Podría ser B2B o consumidor final — preguntar antes de asumir
+          setSession(senderId, { segment: "consumer", step: "disambiguating_b2b" });
+          await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.askB2BorConsumer() });
         } else {
           // Consulta sin intención de compra explícita — NO pedir ubicación todavía
           await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.askHowToHelp() });
@@ -502,6 +549,11 @@ async function handleMessage(senderId: string, text: string): Promise<void> {
     case "vendedor": {
       setSession(senderId, { segment: "vendedor" });
       await sendInstagramReply({ recipientId: senderId, text: RESPONSES.vendedor.redirect() });
+      break;
+    }
+    case "servicios_externos": {
+      setSession(senderId, { segment: "vendedor" });
+      await sendInstagramReply({ recipientId: senderId, text: RESPONSES.serviciosExternos.redirect() });
       break;
     }
   }

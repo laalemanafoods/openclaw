@@ -36,6 +36,18 @@ export const RESPONSES = {
       return "¡Con mucho gusto! 😊 ¿Querés saber dónde conseguir nuestros productos o tenés alguna otra consulta?";
     },
 
+    productInfo(): string {
+      return (
+        "¡Sí! Todos nuestros productos son 100% carne, sin gluten, sin TACC y sin féculas 🌿\n\n" +
+        "Tenemos Bratwurst (Frankfurter, Thüringer, Salame/Queso y Rinderwurst de vaca), Knackwurst y Leberwurst.\n\n" +
+        "¿Querés saber dónde conseguirlos?"
+      );
+    },
+
+    askB2BorConsumer(): string {
+      return "¿Querés vender nuestros productos en tu negocio o estás buscando dónde comprarlos para probarlos? 😊";
+    },
+
     noStoreInProvince(province: string): string {
       return `¡Qué bueno es ${province}! 🙌 Por ahora no tenemos puntos de venta físicos allá, pero para compras grandes (+10 kg) enviamos desde fábrica. ¿Te interesa?`;
     },
@@ -90,12 +102,11 @@ export const RESPONSES = {
   b2b: {
     askForData(): string {
       return (
-        "¡Qué bueno que quieras sumarte con tu local! Tenemos condiciones especiales para revendedores 🥩\n\n" +
-        "Para contactarte necesito:\n\n" +
-        "• Nombre de contacto:\n" +
-        "• Nombre del negocio:\n" +
-        "• Ciudad:\n" +
-        "• WhatsApp:\n\n" +
+        "¡Qué bueno que te interese trabajar con nosotros! 🙌 Para que el equipo comercial te contacte con la info mayorista, por favor pasame:\n\n" +
+        "• Nombre:\n" +
+        "• WhatsApp:\n" +
+        "• Nombre de tu negocio:\n" +
+        "• Ciudad:\n\n" +
         "¿Me los pasás?"
       );
     },
@@ -175,6 +186,14 @@ export const RESPONSES = {
 
     decline(): string {
       return "¡Perfecto! Estoy acá si necesitás algo más. 😊";
+    },
+  },
+
+  serviciosExternos: {
+    redirect(): string {
+      return (
+        "¡Gracias por contactarnos! Para ofrecer servicios a La Alemana Foods, escribinos a laalemanafoods@gmail.com y el equipo administrativo te va a responder a la brevedad. 😊"
+      );
     },
   },
 

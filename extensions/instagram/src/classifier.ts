@@ -1,6 +1,6 @@
 // Classifies incoming Instagram DM text into one of four segments for La Alemana Foods.
 
-export type Segment = "consumer" | "b2b" | "evento" | "queja" | "vendedor";
+export type Segment = "consumer" | "b2b" | "evento" | "queja" | "vendedor" | "servicios_externos";
 
 const B2B_KEYWORDS = [
   "fiambrería",
@@ -18,6 +18,9 @@ const B2B_KEYWORDS = [
   "local comercial",
   "distribución",
   "distribucion",
+  "distribuir",
+  "distribuidor",
+  "distribuidora",
   "proveedor",
   "almacén",
   "almacen",
@@ -41,6 +44,44 @@ const B2B_KEYWORDS = [
   "precios por cantidad",
   "quiero revender",
   "para el local",
+  "quiero vender sus",
+  "quiero vender los",
+  "vender sus productos",
+  "vender los productos",
+  "vender en mi local",
+  "vender en mi negocio",
+  "les interesa vender en",
+  "interesa vender en",
+  "me interesa distribuir",
+  "ser distribuidor",
+  "ser distribuidora",
+  "trabajar con ustedes",
+  "trabajar juntos",
+];
+
+const SERVICIOS_EXTERNOS_KEYWORDS = [
+  "ofrezco mis servicios",
+  "ofrecemos servicios",
+  "empresa de limpieza",
+  "empresa de fletes",
+  "servicio de fletes",
+  "servicios de marketing",
+  "servicios de diseño",
+  "servicios de publicidad",
+  "servicio de publicidad",
+  "agencia de marketing",
+  "agencia de publicidad",
+  "agencia de diseño",
+  "agencia de comunicación",
+  "agencia de comunicacion",
+  "somos una agencia",
+  "soy diseñador",
+  "soy diseñadora",
+  "soy community manager",
+  "community manager",
+  "gestor de redes",
+  "gestora de redes",
+  "manejo redes",
 ];
 
 const QUEJA_KEYWORDS = [
@@ -105,6 +146,9 @@ function normalize(text: string): string {
 export function classifyMessage(text: string): Segment {
   const lower = normalize(text);
 
+  if (SERVICIOS_EXTERNOS_KEYWORDS.some((kw) => lower.includes(normalize(kw)))) {
+    return "servicios_externos";
+  }
   if (VENDEDOR_KEYWORDS.some((kw) => lower.includes(normalize(kw)))) {
     return "vendedor";
   }
