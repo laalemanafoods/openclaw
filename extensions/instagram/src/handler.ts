@@ -2,7 +2,7 @@
 
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { classifyMessage } from "./classifier.js";
-import { sendInstagramReply } from "./instagram-api.js";
+import { sendInstagramReply, fetchInstagramUsername } from "./instagram-api.js";
 import {
   findByBarrioOnly,
   findByCityOnly,
@@ -286,10 +286,11 @@ async function handleMessage(senderId: string, text: string): Promise<void> {
     const whatsapp = extractField(text, "whatsapp") ?? extractField(text, "wp") ?? extractField(text, "wsp") ?? extractPhone(text) ?? "no informado";
 
     setSession(senderId, { segment: "b2b", step: "done" });
-    await Promise.all([
+    const [, username_b2b] = await Promise.all([
       sendInstagramReply({ recipientId: senderId, text: RESPONSES.b2b.confirmation(negocio) }),
-      sendTelegramNotification({ segment: "b2b", contacto, negocio, ciudad, whatsapp, senderId }),
+      fetchInstagramUsername(senderId),
     ]);
+    await sendTelegramNotification({ segment: "b2b", contacto, negocio, ciudad, whatsapp, senderId, username: username_b2b });
     return;
   }
 
@@ -315,10 +316,11 @@ async function handleMessage(senderId: string, text: string): Promise<void> {
     const cantidad = extractField(text, "cantidad") ?? extractField(text, "kg") ?? extractField(text, "kilo") ?? "no informada";
 
     setSession(senderId, { segment: "evento", step: "done" });
-    await Promise.all([
+    const [, username_evento] = await Promise.all([
       sendInstagramReply({ recipientId: senderId, text: RESPONSES.evento.confirmation(nombre) }),
-      sendTelegramNotification({ segment: "evento", nombre, localidad, cantidad, whatsapp, senderId }),
+      fetchInstagramUsername(senderId),
     ]);
+    await sendTelegramNotification({ segment: "evento", nombre, localidad, cantidad, whatsapp, senderId, username: username_evento });
     return;
   }
 
@@ -329,10 +331,11 @@ async function handleMessage(senderId: string, text: string): Promise<void> {
     const descripcion = text.slice(0, 300);
 
     setSession(senderId, { segment: "queja", step: "done" });
-    await Promise.all([
+    const [, username_queja] = await Promise.all([
       sendInstagramReply({ recipientId: senderId, text: RESPONSES.queja.confirmation(nombre) }),
-      sendTelegramNotification({ segment: "queja", nombre, whatsapp, descripcion, senderId }),
+      fetchInstagramUsername(senderId),
     ]);
+    await sendTelegramNotification({ segment: "queja", nombre, whatsapp, descripcion, senderId, username: username_queja });
     return;
   }
 
@@ -360,10 +363,11 @@ async function handleMessage(senderId: string, text: string): Promise<void> {
 
     setSession(senderId, { segment: "confusion", step: "done" });
     resetConfusion(senderId);
-    await Promise.all([
+    const [, username_confusion] = await Promise.all([
       sendInstagramReply({ recipientId: senderId, text: RESPONSES.confusion.confirmation() }),
-      sendTelegramNotification({ segment: "confusion", nombre, whatsapp, consulta, senderId }),
+      fetchInstagramUsername(senderId),
     ]);
+    await sendTelegramNotification({ segment: "confusion", nombre, whatsapp, consulta, senderId, username: username_confusion });
     return;
   }
 

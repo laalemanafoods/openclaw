@@ -1,13 +1,15 @@
 // Sends Telegram notifications for B2B leads, event orders, and complaints.
 
 export type TelegramParams =
-  | { segment: "b2b"; contacto: string; negocio: string; ciudad: string; whatsapp: string; senderId: string }
-  | { segment: "evento"; nombre: string; localidad: string; cantidad: string; whatsapp: string; senderId: string }
-  | { segment: "queja"; nombre: string; whatsapp: string; descripcion: string; senderId: string }
-  | { segment: "confusion"; nombre: string; whatsapp: string; consulta: string; senderId: string };
+  | { segment: "b2b"; contacto: string; negocio: string; ciudad: string; whatsapp: string; senderId: string; username?: string | null }
+  | { segment: "evento"; nombre: string; localidad: string; cantidad: string; whatsapp: string; senderId: string; username?: string | null }
+  | { segment: "queja"; nombre: string; whatsapp: string; descripcion: string; senderId: string; username?: string | null }
+  | { segment: "confusion"; nombre: string; whatsapp: string; consulta: string; senderId: string; username?: string | null };
 
 function buildMessage(params: TelegramParams): string {
-  const igLink = `https://www.instagram.com/direct/t/${params.senderId}`;
+  const igLink = params.username
+    ? `https://www.instagram.com/${params.username}/`
+    : `https://www.instagram.com/direct/t/${params.senderId}`;
   if (params.segment === "b2b") {
     return (
       `🏷️ <b>Nuevo Interesado Mayorista</b>\n` +

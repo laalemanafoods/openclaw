@@ -1,4 +1,21 @@
 // Sends replies to Instagram DMs via the Meta Graph API.
+// The direct-chat link (/direct/t/{id}) only opens the inbox, not the profile.
+// We fetch the username so Telegram notifications link to the profile instead.
+
+export async function fetchInstagramUsername(senderId: string): Promise<string | null> {
+  const accessToken = process.env["INSTAGRAM_ACCESS_TOKEN"];
+  if (!accessToken) return null;
+  try {
+    const resp = await fetch(
+      `https://graph.instagram.com/v25.0/${senderId}?fields=username&access_token=${accessToken}`,
+    );
+    if (!resp.ok) return null;
+    const data = await resp.json() as { username?: string };
+    return data.username ?? null;
+  } catch {
+    return null;
+  }
+}
 
 export async function sendInstagramReply(params: {
   recipientId: string;
