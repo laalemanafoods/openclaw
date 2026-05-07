@@ -1,5 +1,9 @@
 import type { PuntoDeVenta } from "./puntos-de-venta.js";
 
+function pick<T>(items: T[]): T {
+  return items[Math.floor(Math.random() * items.length)]!;
+}
+
 function formatStore(s: PuntoDeVenta): string {
   const dir = s.direccion ? ` 📍 ${s.direccion}` : "";
   const handle = s.instagram ? ` ${s.instagram}` : "";
@@ -13,7 +17,11 @@ export const RESPONSES = {
     },
 
     neutralGreeting(): string {
-      return "¡Hola! Qué gusto saludarte. Soy La Alemanita Digital, la asistente oficial de La Alemana Foods 😊 ¿En qué puedo ayudarte hoy?";
+      return pick([
+        "¡Hola! Qué gusto saludarte. Soy La Alemanita Digital, la asistente de La Alemana Foods 😊 ¿En qué puedo ayudarte?",
+        "¡Hola! Bienvenido/a. Soy La Alemanita, la asistente de La Alemana Foods 🌭 ¿En qué te puedo ayudar hoy?",
+        "¡Hola! Soy La Alemanita Digital de La Alemana Foods 😊 ¿Cómo te puedo ayudar?",
+      ]);
     },
 
     askCity(): string {
@@ -33,7 +41,11 @@ export const RESPONSES = {
     },
 
     askHowToHelp(): string {
-      return "¡Con mucho gusto! 😊 ¿Querés saber dónde conseguir nuestros productos o tenés alguna otra consulta?";
+      return pick([
+        "¡Con mucho gusto! 😊 ¿Querés saber dónde conseguir nuestros productos o tenés alguna otra consulta?",
+        "Claro, estoy acá para ayudarte 🌭 ¿Buscás un punto de venta o tenés otra pregunta?",
+        "¡Decime! 😊 ¿Te puedo orientar sobre dónde encontrar nuestros productos?",
+      ]);
     },
 
     productInfo(): string {
@@ -200,12 +212,34 @@ export const RESPONSES = {
     },
   },
 
+  offTopic: {
+    lightHumor(): string {
+      return pick([
+        "😄 Esa consulta se nos fue un poco del menú.",
+        "🌭 Por ahora solo trabajamos con productos gastronómicos, ¡pero se agradece la creatividad!",
+        "😄 Todavía no llegamos tan lejos jaja. ¿Puedo ayudarte con algo de La Alemana?",
+        "🌭 Eso está fuera de nuestra carta por ahora.",
+      ]);
+    },
+    naturalClose(): string {
+      return pick([
+        "🌭 Cuando quieras hablar de salchichas alemanas, acá estoy.",
+        "🙌 Si necesitás info real sobre nuestros productos, feliz de ayudarte.",
+        "😄 Creo que nos fuimos un poco del menú. ¡Cuando quieras seguimos!",
+      ]);
+    },
+  },
+
   identityGuard(): string {
     return "Soy la asistente de La Alemana Foods 😊 No puedo compartir detalles técnicos, pero sí ayudarte con nuestros productos.";
   },
 
   clarification(): string {
-    return "Perdón, no terminé de entender tu consulta. 🤭 ¿Podrías explicármelo de otra forma así te ayudo mejor?";
+    return pick([
+      "Perdón, no terminé de entender tu consulta. 🤭 ¿Podrías explicármelo de otra forma?",
+      "Hmm, no logro entender bien. ¿Me lo contás de otra manera? 😊",
+      "No llegué a entender bien eso. ¿Me das más detalle? 😊",
+    ]);
   },
 
   fallback(): string {

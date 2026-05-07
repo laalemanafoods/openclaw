@@ -13,7 +13,7 @@ import {
   hasDistinctBarrios,
 } from "./puntos-de-venta.js";
 import { RESPONSES } from "./responses.js";
-import { getSession, setSession, incrementConfusion, resetConfusion, markAsStaff, isStaff } from "./session-store.js";
+import { getSession, setSession, incrementConfusion, resetConfusion, markAsStaff, isStaff, incrementTroll, resetTroll } from "./session-store.js";
 import { sendTelegramNotification } from "./telegram.js";
 
 // ---------------------------------------------------------------------------
@@ -162,6 +162,21 @@ function findKnownArgentineLocation(text: string): string | null {
     if (q.includes(normalize(loc))) return loc;
   }
   return null;
+}
+
+const OFF_TOPIC_PATTERNS = [
+  // Construcción y materiales
+  "cemento", "ladrillo", "ladrillos", "construccion", "construcción",
+  "ferreteria", "ferretería", "hormigon", "hormigón", "plomero", "plomeria", "plomería",
+  // Electrónica absurda aplicada a comida
+  "wifi", "bluetooth",
+  // Automotor / combustibles
+  "repuesto", "nafta", "gasoil",
+];
+
+function isOffTopic(text: string): boolean {
+  const q = normalize(text);
+  return OFF_TOPIC_PATTERNS.some((p) => q.includes(normalize(p)));
 }
 
 const PRICE_KEYWORDS = [
@@ -474,6 +489,17 @@ async function handleMessage(senderId: string, text: string): Promise<void> {
 
   switch (segment) {
     case "consumer": {
+      // Off-topic / low-intent / troll detection
+      if (isOffTopic(text)) {
+        const trollCount = incrementTroll(senderId);
+        const response = trollCount >= 2
+          ? RESPONSES.offTopic.naturalClose()
+          : RESPONSES.offTopic.lightHumor();
+        await sendInstagramReply({ recipientId: senderId, text: response });
+        break;
+      }
+      resetTroll(senderId);
+
       // Check if barrio is in the message
       const byBarrio = findByBarrioOnly(text);
       if (byBarrio.length > 0) {

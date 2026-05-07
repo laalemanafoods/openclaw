@@ -36,6 +36,7 @@ type SessionState =
 
 const sessions = new Map<string, SessionState>();
 const confusionCounts = new Map<string, number>();
+const trollCounts = new Map<string, number>();
 const staffSenders = new Set<string>();
 
 export function getSession(senderId: string): SessionState {
@@ -62,4 +63,14 @@ export function markAsStaff(senderId: string): void {
 
 export function isStaff(senderId: string): boolean {
   return staffSenders.has(senderId);
+}
+
+export function incrementTroll(senderId: string): number {
+  const count = (trollCounts.get(senderId) ?? 0) + 1;
+  trollCounts.set(senderId, count);
+  return count;
+}
+
+export function resetTroll(senderId: string): void {
+  trollCounts.delete(senderId);
 }
