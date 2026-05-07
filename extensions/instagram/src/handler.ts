@@ -2,6 +2,7 @@
 
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { classifyMessage } from "./classifier.js";
+import { processCommentChange, type CommentChangeValue } from "./comment-handler.js";
 import { sendInstagramReply, fetchInstagramUsername } from "./instagram-api.js";
 import {
   findByBarrioOnly,
@@ -42,7 +43,12 @@ type MessagingEvent = {
 
 type InstagramWebhookPayload = {
   object: string;
-  entry: Array<{ id: string; time: number; messaging: MessagingEvent[] }>;
+  entry: Array<{
+    id: string;
+    time: number;
+    messaging: MessagingEvent[];
+    changes: Array<{ field: string; value: unknown }>;
+  }>;
 };
 
 async function readBody(req: IncomingMessage, maxBytes = 512 * 1024): Promise<string> {
@@ -601,6 +607,14 @@ async function processWebhookPayload(rawBody: string): Promise<void> {
   if (payload.object !== "instagram") return;
 
   for (const entry of payload.entry ?? []) {
+    for (const change of entry.changes ?? []) {
+      if (change.field === "comments") {
+        processCommentChange(change.value as CommentChangeValue).catch((err) => {
+          console.error("[instagram] Error procesando comentario:", err);
+        });
+      }
+    }
+
     for (const event of entry.messaging ?? []) {
       const senderId = event.sender?.id;
       const text = event.message?.text;

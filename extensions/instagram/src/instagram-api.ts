@@ -17,6 +17,26 @@ export async function fetchInstagramUsername(senderId: string): Promise<string |
   }
 }
 
+export async function sendCommentReply(commentId: string, message: string): Promise<void> {
+  const accessToken = process.env["INSTAGRAM_ACCESS_TOKEN"];
+  if (!accessToken) {
+    console.warn("[instagram] INSTAGRAM_ACCESS_TOKEN no configurado");
+    return;
+  }
+  try {
+    const resp = await fetch(`https://graph.instagram.com/v25.0/${commentId}/replies`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message, access_token: accessToken }),
+    });
+    if (!resp.ok) {
+      console.error(`[instagram] Error respondiendo comentario ${resp.status}: ${await resp.text()}`);
+    }
+  } catch (err) {
+    console.error("[instagram] Error respondiendo comentario:", err);
+  }
+}
+
 export async function sendInstagramReply(params: {
   recipientId: string;
   text: string;
