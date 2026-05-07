@@ -6,11 +6,21 @@ import { sendCommentReply } from "./instagram-api.js";
 const repliedComments = new Set<string>();
 
 const COMMENT_B2C_KEYWORDS = [
+  // dónde comprar / conseguir
   "donde comprar", "dónde comprar", "donde conseguir", "dónde conseguir",
   "donde lo consigo", "donde encuentro", "dónde encuentro",
-  "punto de venta", "puntos de venta", "donde venden", "dónde venden",
+  "donde venden", "dónde venden", "donde lo venden",
+  // cómo comprar
+  "como se compra", "cómo se compra", "como compro", "cómo compro",
+  "como consigo", "cómo consigo", "como lo consigo", "cómo lo consigo",
+  "como los consigo", "como las consigo",
+  // puntos de venta
+  "punto de venta", "puntos de venta",
+  // envíos y disponibilidad
   "hacen envios", "hacen envíos", "envio", "envíos", "mandan a",
-  "despachan", "llegan a", "tienen en",
+  "despachan", "llegan a", "tienen en", "hay en",
+  // ubicaciones argentinas abreviadas
+  "bs as", "bsas", "capital federal", "caba",
 ];
 
 const COMMENT_B2B_KEYWORDS = [
@@ -40,17 +50,19 @@ function pick(items: string[]): string {
 
 function replyTextB2C(): string {
   return pick([
-    "¡Hola! 🙌 Escribinos por DM y te ayudamos a encontrar el punto de venta más cercano.",
-    "¡Gracias por escribirnos! 😊 Mandanos un DM y te pasamos toda la info.",
-    "¡Hola! 🌭 Escribinos por privado y te ayudamos con muchísimo gusto.",
+    "¡Hola! 🇩🇪 Escribinos por DM y te indico personalmente dónde podés comprarlas según tu barrio 😊",
+    "¡Hola! 🌭 Mandanos un DM y te ayudamos personalmente a encontrar el punto de venta más cercano según tu zona.",
+    "¡Claro! 😊 Escribinos por privado y te recomendamos dónde conseguirlas cerca tuyo.",
+    "¡Hola! 🙌 Por DM te paso los puntos de venta más cercanos según dónde estés.",
+    "¡Hola! 🇩🇪 Escribinos y vemos juntos cuál te queda más cómodo para conseguirlas 😊",
   ]);
 }
 
 function replyTextB2B(): string {
   return pick([
-    "¡Qué bueno que te interese trabajar con nosotros! 🙌 Escribinos por DM y seguimos por ahí.",
-    "¡Gracias por tu interés! 😊 Mandanos un mensaje privado y el equipo comercial te responde.",
-    "¡Nos encanta leer eso! 🌭 Escribinos por privado y te contamos más.",
+    "¡Qué bueno leer eso! 🙌 Escribinos por DM y te contamos personalmente cómo podemos trabajar juntos.",
+    "¡Nos encanta tu interés! 🌭 Mandanos un privado y seguimos por ahí con muchísimo gusto.",
+    "¡Gracias por escribirnos! 😊 Escribinos por DM y el equipo comercial te asesora personalmente.",
   ]);
 }
 
