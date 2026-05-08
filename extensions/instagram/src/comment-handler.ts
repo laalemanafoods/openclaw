@@ -50,6 +50,7 @@ function pick(items: string[]): string {
 
 function replyTextB2C(): string {
   return pick([
+    "¡Hola! Te van a encantar 🇩🇪 Escribinos por DM y te indico personalmente dónde podés comprarlas hoy mismo según tu barrio 😊",
     "¡Hola! 🇩🇪 Escribinos por DM y te indico personalmente dónde podés comprarlas según tu barrio 😊",
     "¡Hola! 🌭 Mandanos un DM y te ayudamos personalmente a encontrar el punto de venta más cercano según tu zona.",
     "¡Claro! 😊 Escribinos por privado y te recomendamos dónde conseguirlas cerca tuyo.",
