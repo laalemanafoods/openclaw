@@ -19,7 +19,7 @@ export const RESPONSES = {
     neutralGreeting(): string {
       return pick([
         "¡Hola! Qué gusto saludarte. Soy La Alemanita Digital, la asistente de La Alemana Foods 😊 ¿En qué puedo ayudarte?",
-        "¡Hola! Bienvenido/a. Soy La Alemanita, la asistente de La Alemana Foods 🌭 ¿En qué te puedo ayudar hoy?",
+        "¡Hola! Bienvenido/a. Soy La Alemanita Digital, la asistente de La Alemana Foods 🌭 ¿En qué te puedo ayudar hoy?",
         "¡Hola! Soy La Alemanita Digital de La Alemana Foods 😊 ¿Cómo te puedo ayudar?",
       ]);
     },
