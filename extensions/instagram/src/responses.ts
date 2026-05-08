@@ -88,6 +88,25 @@ export const RESPONSES = {
       );
     },
 
+    greetWithStores(locationName: string, stores: PuntoDeVenta[]): string {
+      const lines = stores.map(formatStore).join("\n");
+      return `¡Hola! 🙌 En ${locationName} podés conseguir nuestros productos en:\n\n${lines}\n\n¿Necesitás algo más? 😊`;
+    },
+
+    greetWithStoresGrouped(locationName: string, groups: Map<string, PuntoDeVenta[]>): string {
+      const body = Array.from(groups.entries())
+        .map(([barrio, stores]) => {
+          const lines = stores.map(formatStore).join("\n");
+          return `${barrio.toUpperCase()}\n${lines}`;
+        })
+        .join("\n\n");
+      return `¡Hola! 🙌 En ${locationName} tenemos varios puntos de venta:\n\n${body}\n\n¿Necesitás algo más? 😊`;
+    },
+
+    greetWithAskBarrio(cityName: string): string {
+      return `¡Claro! 😊 ¿En qué barrio o zona de ${cityName} estás? Así te recomiendo el punto de venta más cercano.`;
+    },
+
     storeFound(locationName: string, stores: PuntoDeVenta[]): string {
       const lines = stores.map(formatStore).join("\n");
       return `¡Claro! Te cuento dónde podés encontrar nuestros productos en ${locationName}:\n\n${lines}\n\n¿Necesitás algo más? 😊`;

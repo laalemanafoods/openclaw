@@ -280,8 +280,78 @@ async function handleMessage(senderId: string, text: string): Promise<void> {
     return;
   }
 
-  // Universal first-message guard: ALWAYS greet before entering any flow
+  // First-message: analyze intent + location before responding
   if (session.segment === "unknown") {
+    const firstSegment = classifyMessage(text);
+
+    if (firstSegment === "b2b") {
+      const cityFromMessage = findByCityOnly(text)[0]?.ciudad ?? findKnownArgentineLocation(text) ?? undefined;
+      setSession(senderId, { segment: "b2b", step: "collecting", city: cityFromMessage });
+      await sendInstagramReply({ recipientId: senderId, text: RESPONSES.b2b.askForData(cityFromMessage) });
+      return;
+    }
+    if (firstSegment === "servicios_externos") {
+      setSession(senderId, { segment: "vendedor" });
+      await sendInstagramReply({ recipientId: senderId, text: RESPONSES.serviciosExternos.redirect() });
+      return;
+    }
+    if (firstSegment === "vendedor") {
+      setSession(senderId, { segment: "vendedor" });
+      await sendInstagramReply({ recipientId: senderId, text: RESPONSES.vendedor.redirect() });
+      return;
+    }
+    if (firstSegment === "queja") {
+      setSession(senderId, { segment: "queja", step: "collecting" });
+      await sendInstagramReply({ recipientId: senderId, text: RESPONSES.queja.askForData() });
+      return;
+    }
+    if (firstSegment === "evento") {
+      setSession(senderId, { segment: "evento", step: "confirming" });
+      await sendInstagramReply({ recipientId: senderId, text: RESPONSES.evento.confirmInterest() });
+      return;
+    }
+
+    // Consumer: try to extract location from first message
+    if (firstSegment === "consumer") {
+      if (askingAboutIngredients(text)) {
+        setSession(senderId, { segment: "consumer" });
+        await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.productInfo() });
+        return;
+      }
+      const byBarrioFirst = findByBarrioOnly(text);
+      if (byBarrioFirst.length > 0) {
+        const cities = getBarrioCities(text);
+        if (cities.length > 1) {
+          const barrioName = byBarrioFirst[0]?.barrio ?? text;
+          setSession(senderId, { segment: "consumer", step: "asking_city_for_barrio", barrio: barrioName });
+          await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.askCityForBarrio(barrioName, cities) });
+        } else {
+          setSession(senderId, { segment: "consumer" });
+          await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.greetWithStores(byBarrioFirst[0]?.barrio ?? text, byBarrioFirst) });
+        }
+        return;
+      }
+      const byCityFirst = findByCityOnly(text);
+      if (byCityFirst.length > 0) {
+        const cityName = byCityFirst[0]!.ciudad;
+        if (hasDistinctBarrios(byCityFirst)) {
+          setSession(senderId, { segment: "consumer", step: "asking_barrio", city: cityName });
+          await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.greetWithAskBarrio(cityName) });
+        } else {
+          setSession(senderId, { segment: "consumer" });
+          await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.greetWithStores(cityName, byCityFirst) });
+        }
+        return;
+      }
+      const knownLocFirst = findKnownArgentineLocation(text);
+      if (knownLocFirst) {
+        setSession(senderId, { segment: "evento", step: "confirming" });
+        await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.noStoreInProvince(knownLocFirst) });
+        return;
+      }
+    }
+
+    // Default: generic greeting for unclear first messages
     setSession(senderId, { segment: "consumer" });
     await sendInstagramReply({ recipientId: senderId, text: RESPONSES.consumer.neutralGreeting() });
     return;
